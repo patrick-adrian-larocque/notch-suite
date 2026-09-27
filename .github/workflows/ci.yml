@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Package.swift"
+      - "Package.resolved"
+      - "Sources/**"
+      - "Tests/**"
+      - ".swift-format"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "Package.swift"
+      - "Package.resolved"
+      - "Sources/**"
+      - "Tests/**"
+      - ".swift-format"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux (Swift 6.4)
+    runs-on: ubuntu-latest
+    container: swift:6.4-noble
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check for a Swift package
+        id: package
+        run: |
+          if [ -f Package.swift ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Package.swift yet (see issue #3), so build and test steps are skipped."
+          fi
+
+      - uses: actions/cache@v4
+        if: steps.package.outputs.present == 'true'
+        with:
+          path: .build
+          key: linux-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: linux-spm-
+
+      - name: Build
+        if: steps.package.outputs.present == 'true'
+        run: swift build --build-tests
+
+      - name: Test
+        if: steps.package.outputs.present == 'true'
+        run: swift test --skip-build
+
+      - name: Lint formatting
+        if: steps.package.outputs.present == 'true'
+        run: swift format lint --strict --recursive Sources Tests
+
+  macos:
+    name: macOS (Xcode)
+    needs: linux
+    # macOS minutes count 10x against the Actions quota, so skip draft PRs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check for a Swift package
+        id: package
+        run: |
+          if [ -f Package.swift ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Package.swift yet (see issue #3), so build and test steps are skipped."
+          fi
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - uses: actions/cache@v4
+        if: steps.package.outputs.present == 'true'
+        with:
+          path: .build
+          key: macos-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: macos-spm-
+
+      - name: Build
+        if: steps.package.outputs.present == 'true'
+        run: swift build --build-tests
+
+      - name: Test
+        if: steps.package.outputs.present == 'true'
+        run: swift test --skip-build

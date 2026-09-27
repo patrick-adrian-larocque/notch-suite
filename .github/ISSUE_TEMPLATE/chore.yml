@@ -1,0 +1,31 @@
+name: Chore
+description: Tooling, configuration, dependency, or cleanup work.
+body:
+  - type: textarea
+    id: what-and-why
+    attributes:
+      label: What and why
+      description: What needs doing, and what it improves.
+    validations:
+      required: true
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      multiple: true
+      options:
+        - Core (NotchCore, platform-independent Swift)
+        - UI (SwiftUI views)
+        - App (macOS integration, packaging)
+        - CI (GitHub Actions, build tooling)
+        - Claude config (CLAUDE.md, .claude/)
+    validations:
+      required: true
