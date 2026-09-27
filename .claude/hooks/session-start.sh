@@ -1,11 +1,46 @@
 #!/bin/bash
-# Makes `swift` and `lldb` usable in Claude Code web sessions, where download.swift.org
-# is blocked but Docker is available.
+# Sets up Claude Code web sessions: code-search tools (fd, fzf, rg, ast-grep), then
+# `swift` and `lldb` via Docker, since download.swift.org is blocked.
 set -euo pipefail
 
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
+
+# Best-effort: a failed install must never block the Swift setup below.
+# .claude/rules/code-search.md describes the fallback for each missing tool.
+install_search_tools() {
+  local apt_packages=()
+  command -v fd >/dev/null 2>&1 || command -v fdfind >/dev/null 2>&1 || apt_packages+=(fd-find)
+  command -v fzf >/dev/null 2>&1 || apt_packages+=(fzf)
+  command -v rg >/dev/null 2>&1 || apt_packages+=(ripgrep)
+  if [ ${#apt_packages[@]} -gt 0 ]; then
+    timeout 120 apt-get update -qq >/dev/null 2>&1 || true
+    DEBIAN_FRONTEND=noninteractive timeout 180 apt-get install -y -qq --no-install-recommends \
+      "${apt_packages[@]}" >/dev/null 2>&1 || true
+  fi
+  # Debian/Ubuntu name the fd binary `fdfind`.
+  if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
+    ln -sf "$(command -v fdfind)" /usr/local/bin/fd
+  fi
+
+  if ! command -v ast-grep >/dev/null 2>&1; then
+    PIP_ROOT_USER_ACTION=ignore timeout 180 pip install -q ast-grep-cli >/dev/null 2>&1 ||
+      timeout 180 npm install -g --silent @ast-grep/cli >/dev/null 2>&1 ||
+      true
+  fi
+  # Both packages also install an `sg` alias that shadows the system `sg` (switch group).
+  if [ -e /usr/local/bin/sg ] && /usr/local/bin/sg --version 2>/dev/null | grep -q ast-grep; then
+    rm -f /usr/local/bin/sg
+  fi
+
+  local available=() missing=() tool
+  for tool in fd fzf rg ast-grep; do
+    if command -v "$tool" >/dev/null 2>&1; then available+=("$tool"); else missing+=("$tool"); fi
+  done
+  echo "Code-search tools available: ${available[*]:-none}${missing:+; missing: ${missing[*]} (use the fallbacks in .claude/rules/code-search.md)}."
+}
+install_search_tools
 
 image="swift:6.4-noble"
 mirror="mirror.gcr.io/library/$image"
