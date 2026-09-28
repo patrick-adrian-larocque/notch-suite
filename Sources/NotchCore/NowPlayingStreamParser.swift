@@ -62,6 +62,23 @@ public struct NowPlayingStreamParser: Sendable {
         guard let payload = envelope["payload"]?.objectValue else {
             throw NowPlayingStreamError.invalidEnvelope("\"payload\" must be an object")
         }
+        try validateMandatoryKeys(in: payload)
         return (isDiff, payload)
+    }
+
+    /// Rejects a payload that gives a mandatory key the wrong type.
+    ///
+    /// Without this, a diff such as `{"title": 5}` would overwrite the good title and
+    /// quietly turn `nowPlaying` into `nil`. A `null` is still allowed: in a diff it removes
+    /// the key. Optional keys stay lenient; a wrongly typed one just reads as absent.
+    private static func validateMandatoryKeys(in payload: [String: JSONValue]) throws {
+        for key in ["bundleIdentifier", "title"] {
+            if let value = payload[key], value != .null, value.stringValue == nil {
+                throw NowPlayingStreamError.invalidEnvelope("\"\(key)\" must be a string")
+            }
+        }
+        if let value = payload["playing"], value != .null, value.boolValue == nil {
+            throw NowPlayingStreamError.invalidEnvelope("\"playing\" must be a boolean")
+        }
     }
 }
