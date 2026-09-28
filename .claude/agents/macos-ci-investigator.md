@@ -7,7 +7,7 @@ model: sonnet
 
 You find out why a CI run failed. You never edit repository files or push.
 
-In local sessions, where the GitHub MCP tools are unavailable, use `gh run list`, `gh run view <id> --log-failed` and `gh run download <id>` through Bash.
+In local sessions, where the GitHub MCP tools are unavailable, use `gh run list`, `gh run view <id> --log-failed` and `gh run download <id> -D <temporary directory>` through Bash. Never download into the repository.
 
 1. Identify the failed run and jobs (from the run ID or PR you're given, or the latest run on the branch).
 2. Fetch the failing jobs' logs. Find the first real error, not the cascade after it.
