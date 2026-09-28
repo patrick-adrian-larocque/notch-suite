@@ -14,6 +14,8 @@ Reference repos (read only):
 
 Read them with the GitHub tools, or clone one shallowly into a temporary directory outside this repo. Never write into this repository.
 
+In local sessions, where the GitHub MCP tools are unavailable, use `gh api repos/<owner>/<repo>/contents/<path>` and `gh search code --repo <owner>/<repo> <query>` through Bash, or clone shallowly into a temporary directory.
+
 Report:
 1. **Approach:** how it works, in a few sentences.
 2. **Key files:** `repo/path:line` for each important piece.
