@@ -43,7 +43,8 @@ extension NowPlaying {
     ///
     /// Returns `nil` when a mandatory key is missing or has the wrong type, which
     /// is how "nothing is playing" looks. An optional key with the wrong type is
-    /// treated as absent rather than failing the whole state.
+    /// treated as absent rather than failing the whole state. (The stream parser is
+    /// stricter: it rejects a line that gives a mandatory key the wrong type.)
     init?(state: [String: JSONValue]) {
         guard
             let bundleIdentifier = state["bundleIdentifier"]?.stringValue,

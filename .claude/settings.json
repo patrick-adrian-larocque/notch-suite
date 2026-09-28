@@ -30,6 +30,8 @@
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
       "Read(./**/*.p12)",
       "Read(./**/*.mobileprovision)",
       "Read(./**/*.cer)"

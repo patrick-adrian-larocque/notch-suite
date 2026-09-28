@@ -26,7 +26,7 @@ swift format lint --strict --recursive Sources Tests
 - `swift test --skip-build` only runs what `swift build --build-tests` already built, so run them in that order. On its own it reports failures.
 - To fix formatting: `swift format format --in-place --recursive Sources Tests`.
 - On a Mac these run natively. In Claude Code cloud sessions `swift` is a wrapper that runs Linux Swift in Docker (`.claude/hooks/session-start.sh`).
-- To run what CI's Linux job runs, from a Mac: `SWIFT_IMAGE=swift:6.4-noble scripts/ci-swift.sh test`. It needs Docker running (OrbStack on the owner's Mac).
+- To run the Linux side of CI from a Mac, use `SWIFT_IMAGE=swift:6.4-noble scripts/ci-swift.sh test` for the build and tests, and `SWIFT_IMAGE=swift:6.4-noble scripts/ci-swift.sh format lint --strict --recursive Sources Tests` for the lint. It needs Docker running (OrbStack on the owner's Mac) and shares `.build` with the macOS build, which works.
 - The macOS app build command will be added here once the app target exists.
 - `.swift-version` pins swiftly's toolchain for this folder and is gitignored. CI uses Xcode's Swift on macOS and the `swift:6.4-noble` image on Linux.
 
@@ -59,7 +59,11 @@ Follow `/port-from-reference` whenever code from them is copied or closely follo
 
 `claude --worktree <name>` creates `.claude/worktrees/<name>/` on branch `worktree-<name>`. `swift build` and `swift test` work inside it. `${CLAUDE_PROJECT_DIR}` in hooks deliberately stays at the main checkout.
 
-`worktree.baseRef` is `"head"` in `.claude/settings.json`, so worktrees branch from local HEAD and carry unpushed commits. Change it to `"fresh"` to branch from `origin/main` instead. There is no `.worktreeinclude`: no gitignored file is needed inside worktrees yet. Add one if that changes.
+`worktree.baseRef` is `"head"` in `.claude/settings.json`, so worktrees branch from local HEAD and carry unpushed commits. That includes the commits of whatever feature branch HEAD is on, so switch to the branch you want first. Change it to `"fresh"` to branch from `origin/main` instead. There is no `.worktreeinclude`: no gitignored file is needed inside worktrees yet. Add one if that changes.
+
+## Secrets
+
+`.claude/settings.json` denies the Read and Grep tools access to `.env` files and signing material (`*.p12`, `*.mobileprovision`, `*.cer`). It does not stop shell commands such as `cat`, so keep real secrets out of the repository.
 
 ## Where the details live
 
