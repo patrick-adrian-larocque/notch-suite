@@ -31,3 +31,8 @@ Package.resolved
 # Editor
 .vscode/
 .idea/
+
+# Claude Code: personal settings, personal instructions, and worktree checkouts
+.claude/settings.local.json
+CLAUDE.local.md
+.claude/worktrees/
