@@ -9,7 +9,7 @@ Report the CI state for PR $ARGUMENTS, or for the current branch if no PR number
 Use whichever GitHub tools the session has: GitHub MCP tools in cloud sessions, or `gh run list` / `gh run view --log-failed` locally.
 
 1. List the latest workflow run for each workflow on the branch's head commit, with each job's status and duration.
-2. Treat a skipped macOS job on a draft PR as expected (it's skipped to save minutes), not as a failure.
+2. Treat a skipped macOS job on a draft PR as expected, not as a failure. GitHub-hosted runs skip drafts to save minutes. With the self-hosted Mac runner on (repository variable `CI_RUNNER` = `self-hosted`), drafts do build. A job stuck in "Queued" then usually means the Mac is asleep or offline (docs/self-hosted-runner.md).
 3. For each failed job:
    - Fetch its logs and find the first real error, not the cascade after it.
    - Quote `file:line` and the smallest useful excerpt.

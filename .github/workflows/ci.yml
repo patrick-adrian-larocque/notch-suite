@@ -10,6 +10,7 @@ on:
       - "Tests/**"
       - ".swift-format"
       - ".github/workflows/ci.yml"
+      - "scripts/ci-swift.sh"
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
@@ -19,6 +20,7 @@ on:
       - "Tests/**"
       - ".swift-format"
       - ".github/workflows/ci.yml"
+      - "scripts/ci-swift.sh"
   workflow_dispatch:
 
 permissions:
@@ -28,12 +30,22 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Where jobs run: GitHub-hosted runners by default. Setting the repository
+# variable CI_RUNNER to "self-hosted" moves both jobs to the Mac runner, which
+# uses no Actions minutes (docs/self-hosted-runner.md). Pull requests from forks
+# always stay on GitHub-hosted runners so outside code never runs on the Mac.
+# The same condition appears in each job below because job-level `if` and
+# `runs-on` can't read workflow-level env.
+
 jobs:
   linux:
     name: Linux (Swift 6.4)
-    runs-on: ubuntu-latest
-    container: swift:6.4-noble
+    runs-on: ${{ (vars.CI_RUNNER == 'self-hosted' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)) && fromJSON('["self-hosted","macOS","ARM64"]') || 'ubuntu-latest' }}
     timeout-minutes: 15
+    env:
+      # scripts/ci-swift.sh runs every Swift command in this image, so the job is
+      # identical on GitHub's Ubuntu runner and on the Mac (via OrbStack).
+      SWIFT_IMAGE: swift:6.4-noble
     steps:
       - uses: actions/checkout@v6
 
@@ -51,27 +63,29 @@ jobs:
         if: steps.package.outputs.present == 'true'
         with:
           path: .build
-          key: linux-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}
-          restore-keys: linux-spm-
+          # The container matches the runner's CPU: x86_64 on GitHub, arm64 on the Mac.
+          key: linux-${{ runner.arch }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: linux-${{ runner.arch }}-spm-
 
       - name: Build
         if: steps.package.outputs.present == 'true'
-        run: swift build --build-tests
+        run: scripts/ci-swift.sh build --build-tests
 
       - name: Test
         if: steps.package.outputs.present == 'true'
-        run: swift test --skip-build
+        run: scripts/ci-swift.sh test --skip-build
 
       - name: Lint formatting
         if: steps.package.outputs.present == 'true'
-        run: swift format lint --strict --recursive Sources Tests
+        run: scripts/ci-swift.sh format lint --strict --recursive Sources Tests
 
   macos:
     name: macOS (Xcode)
     needs: linux
-    # macOS minutes count 10x against the Actions quota, so skip draft PRs.
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
-    runs-on: macos-26
+    # GitHub-hosted macOS minutes count 10x against the Actions quota, so hosted
+    # runs skip draft PRs. The self-hosted Mac costs no minutes, so it builds drafts too.
+    if: (vars.CI_RUNNER == 'self-hosted' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)) || github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ${{ (vars.CI_RUNNER == 'self-hosted' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)) && fromJSON('["self-hosted","macOS","ARM64"]') || 'macos-26' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
@@ -86,22 +100,24 @@ jobs:
             echo "::notice::No Package.swift yet (see issue #3), so build and test steps are skipped."
           fi
 
+      # `xcrun swift` always uses the selected Xcode's toolchain. A plain `swift`
+      # on the Mac could resolve to a swiftly toolchain or a .swift-version pin instead.
       - name: Show toolchain
         run: |
           xcodebuild -version
-          swift --version
+          xcrun swift --version
 
       - uses: actions/cache@v4
         if: steps.package.outputs.present == 'true'
         with:
           path: .build
-          key: macos-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}
-          restore-keys: macos-spm-
+          key: macos-${{ runner.arch }}-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: macos-${{ runner.arch }}-spm-
 
       - name: Build
         if: steps.package.outputs.present == 'true'
-        run: swift build --build-tests
+        run: xcrun swift build --build-tests
 
       - name: Test
         if: steps.package.outputs.present == 'true'
-        run: swift test --skip-build
+        run: xcrun swift test --skip-build

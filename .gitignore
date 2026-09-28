@@ -21,6 +21,9 @@ xcuserdata/
 .swiftpm/
 Packages/
 Package.resolved
+# swiftly's per-folder toolchain pin. CI pins Linux Swift with the image tag in
+# ci.yml and macOS Swift with Xcode, so a local pin stays local.
+.swift-version
 
 # macOS
 .DS_Store
