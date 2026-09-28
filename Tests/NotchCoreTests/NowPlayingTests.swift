@@ -61,4 +61,17 @@ import Testing
     @Test func isNilForEmptyState() {
         #expect(NowPlaying(state: [:]) == nil)
     }
+
+    @Test(arguments: [
+        ("playing", JSONValue.number(1)),
+        ("playing", JSONValue.string("true")),
+        ("bundleIdentifier", JSONValue.number(1)),
+        ("bundleIdentifier", JSONValue.bool(true)),
+        ("title", JSONValue.bool(false)),
+    ])
+    func isNilWhenAnyMandatoryKeyHasTheWrongType(key: String, value: JSONValue) {
+        var state = mandatory
+        state[key] = value
+        #expect(NowPlaying(state: state) == nil)
+    }
 }

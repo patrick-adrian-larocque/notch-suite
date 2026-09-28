@@ -229,4 +229,98 @@ import Testing
         #expect(result?.duration == nil)
         #expect(parser.state["durationMicros"] == .number(215_000_000))
     }
+
+    // MARK: Review follow-ups
+
+    /// Ingests `line` and returns the error it was rejected with, or `nil` if it was accepted.
+    private func rejection(
+        of line: String, on parser: inout NowPlayingStreamParser
+    ) -> NowPlayingStreamError? {
+        do {
+            try parser.ingest(line: line)
+            return nil
+        } catch {
+            return error as? NowPlayingStreamError
+        }
+    }
+
+    @Test(
+        arguments: [false, true],
+        [#"{"title":5}"#, #"{"playing":"yes"}"#, #"{"bundleIdentifier":1}"#])
+    func wrongTypedMandatoryKeyIsRejectedAndKeepsState(diff: Bool, payload: String) throws {
+        var parser = NowPlayingStreamParser()
+        try parser.ingest(line: envelope(diff: false, song))
+        let before = parser.state
+        let error = rejection(of: envelope(diff: diff, payload), on: &parser)
+        guard case .invalidEnvelope? = error else {
+            Issue.record("expected invalidEnvelope, got \(String(describing: error))")
+            return
+        }
+        #expect(parser.state == before)
+    }
+
+    @Test func nullingAKeyThatWasNeverSetLeavesStateUnchanged() throws {
+        var parser = NowPlayingStreamParser()
+        try parser.ingest(line: envelope(diff: false, song))
+        let before = parser.state
+        try parser.ingest(line: envelope(diff: true, #"{"genre":null}"#))
+        #expect(parser.state == before)
+        #expect(parser.state.keys.contains("genre") == false)
+    }
+
+    @Test func nullingAMandatoryKeyRemovesItFromState() throws {
+        var parser = NowPlayingStreamParser()
+        try parser.ingest(line: envelope(diff: false, song))
+        try parser.ingest(line: envelope(diff: true, #"{"title":null}"#))
+        #expect(parser.state["title"] == nil)
+    }
+
+    @Test(arguments: [false, true])
+    func nullPayloadIsAnInvalidEnvelopeNotMalformedJSON(diff: Bool) throws {
+        var parser = NowPlayingStreamParser()
+        try parser.ingest(line: envelope(diff: false, song))
+        let before = parser.state
+        let error = rejection(of: envelope(diff: diff, "null"), on: &parser)
+        guard case .invalidEnvelope? = error else {
+            Issue.record("expected invalidEnvelope, got \(String(describing: error))")
+            return
+        }
+        #expect(parser.state == before)
+    }
+
+    @Test(arguments: [#""text""#, "[]", "7", "true"])
+    func nonObjectPayloadIsRejectedAndKeepsState(payload: String) throws {
+        var parser = NowPlayingStreamParser()
+        try parser.ingest(line: envelope(diff: false, song))
+        let before = parser.state
+        let error = rejection(of: envelope(diff: true, payload), on: &parser)
+        guard case .invalidEnvelope? = error else {
+            Issue.record("expected invalidEnvelope, got \(String(describing: error))")
+            return
+        }
+        #expect(parser.state == before)
+    }
+
+    @Test(arguments: [
+        #"{"diff":false,"payload":{}}"#,
+        #"{"type":"Data","diff":false,"payload":{}}"#,
+        #"{"type":null,"diff":false,"payload":{}}"#,
+    ])
+    func missingOrWrongCaseTypeIsRejected(line: String) {
+        var parser = NowPlayingStreamParser()
+        guard case .invalidEnvelope? = rejection(of: line, on: &parser) else {
+            Issue.record("expected invalidEnvelope for \(line)")
+            return
+        }
+    }
+
+    @Test(arguments: [#""true""#, "1", "0", "null"])
+    func nonBooleanDiffIsRejected(diff: String) {
+        var parser = NowPlayingStreamParser()
+        let line = #"{"type":"data","diff":\#(diff),"payload":{}}"#
+        guard case .invalidEnvelope? = rejection(of: line, on: &parser) else {
+            Issue.record("expected invalidEnvelope for \(line)")
+            return
+        }
+    }
 }
