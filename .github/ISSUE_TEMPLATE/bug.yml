@@ -1,0 +1,54 @@
+name: Bug
+description: Something doesn't work the way it should.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: e.g. macOS 26.6
+    validations:
+      required: true
+  - type: dropdown
+    id: display
+    attributes:
+      label: Which display was the notch UI on?
+      options:
+        - Built-in display with a notch
+        - Built-in display without a notch
+        - External display
+    validations:
+      required: true
+  - type: input
+    id: build
+    attributes:
+      label: App version or commit
+      placeholder: e.g. 0.1.0 or a commit SHA
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Paste relevant log output here. Drag screenshots into the box.
+      render: shell

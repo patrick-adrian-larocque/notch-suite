@@ -1,0 +1,38 @@
+name: Sync labels
+
+on:
+  push:
+    paths:
+      - .github/labels.yml
+      - .github/workflows/labels.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: sync-labels
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Create or update labels from .github/labels.yml
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          file=.github/labels.yml
+          count=$(yq '. | length' "$file")
+          for i in $(seq 0 $((count - 1))); do
+            name=$(yq ".[$i].name" "$file")
+            color=$(yq ".[$i].color" "$file")
+            description=$(yq ".[$i].description" "$file")
+            gh label create "$name" --repo "$GITHUB_REPOSITORY" \
+              --color "$color" --description "$description" --force
+          done

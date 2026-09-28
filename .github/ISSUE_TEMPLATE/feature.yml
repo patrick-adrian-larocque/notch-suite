@@ -1,0 +1,60 @@
+name: Feature
+description: Propose new behavior or a new capability.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Write this so someone (or Claude) could build it without follow-up questions.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What's missing or painful today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: What should happen instead? Sketches, screenshots, or examples help.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: The checklist that decides when this is done.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      multiple: true
+      options:
+        - Core (NotchCore, platform-independent Swift)
+        - UI (SwiftUI views)
+        - App (macOS integration, packaging)
+        - CI (GitHub Actions, build tooling)
+        - Claude config (CLAUDE.md, .claude/)
+    validations:
+      required: true
+  - type: dropdown
+    id: needs-mac
+    attributes:
+      label: Does this need a real Mac to verify?
+      description: For example notch placement, live media playback, AirDrop, or permission prompts.
+      options:
+        - No, tests and CI are enough
+        - Yes, it needs on-device verification
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Related issues, or where boring.notch, NotchDrop, or mediaremote-adapter do something similar (file paths welcome).
