@@ -6,7 +6,9 @@ few excellent open-source projects.
 
 ## Status
 
-Early scaffold. Nothing is implemented yet.
+Early scaffold. `NotchCore` (pure Swift, tested on Linux and macOS) has the first
+piece of logic: a parser for mediaremote-adapter's `stream` output. The UI and
+app targets are not started yet.
 
 ## License
 
@@ -30,4 +32,10 @@ of reused components.
 
 ## Building
 
-macOS 14+, Xcode. Project scaffolding to be added.
+macOS 14+, Xcode. The core builds with SwiftPM:
+
+    swift build --build-tests
+    swift test --skip-build
+    swift format lint --strict --recursive Sources Tests
+
+The macOS app target will be added later.
