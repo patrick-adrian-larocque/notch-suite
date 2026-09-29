@@ -25,5 +25,9 @@ Implement GitHub issue #$issue in this repository.
 8. **Open or update the PR.**
    - With no PR yet, open a draft that follows `.github/pull_request_template.md`. It says `Closes #$issue` and has a test plan listing only what you actually ran, plus anything that still needs a real Mac.
    - With an existing PR, update its description instead.
-   - Once every acceptance criterion is verified and CI is green, mark the PR ready for review. Don't merge it: the owner merges.
-9. **Report** the PR link, whether it's still a draft, and any acceptance criterion you could not verify.
+   - Once every acceptance criterion is verified and CI is green, mark the PR ready for review and request a Copilot review.
+9. **Work Copilot's findings on this PR.**
+   - For each finding, push a fix and reply on its thread with the commit.
+   - Then re-request a Copilot review. It marks a finding resolved only when it re-reviews a commit that fixes it; resolving a thread by hand doesn't update its overview.
+   - Repeat until the latest overview lists no open findings. Don't merge: the owner merges.
+10. **Report** the PR link, whether it's still a draft, any open Copilot findings, and any acceptance criterion you could not verify.

@@ -52,8 +52,9 @@ Follow `/port-from-reference` whenever code from them is copied or closely follo
 - One issue, one branch, one PR. The branch is `claude/issue-<N>-<slug>` (a cloud session may assign its own branch name instead). The PR follows `.github/pull_request_template.md` and says `Closes #N`.
 - Before starting an issue, look for an open PR that mentions it. If one exists, continue on its branch and update it; never open a second PR for the same issue.
 - Never merge another open PR's branch into yours. If your work needs it, say so in your PR and wait for that PR to merge first.
-- A draft PR is still in progress. Mark it ready for review once its acceptance criteria are verified and CI is green.
-- Merge only after CI and the automated review (Copilot) have finished on the latest commit, and fix review findings on the same PR. A finding that arrives after a merge goes in one follow-up PR that links the merged one.
+- A draft PR is still in progress. Once its acceptance criteria are verified and CI is green, mark it ready for review and request a Copilot review. Copilot doesn't review drafts unless the repository turns that on.
+- Fix Copilot's findings on the same PR. Push the fix, reply on each thread with the commit, then re-request a Copilot review. Copilot marks a finding resolved only when it re-reviews a commit that fixes it, so a thread resolved by hand still shows as open in its overview.
+- Merge only once CI is green and Copilot's latest overview lists no open findings. A finding that arrives after a merge goes in one follow-up PR that links the merged one.
 - Run `/swift-check` before pushing. `/work-issue <N>` does the whole loop for one issue; the `feature-worker` agent runs it in its own worktree so issues can proceed in parallel.
 - Linux first, macOS only when needed. macOS minutes on GitHub-hosted runners count 10x, so that job waits for the Linux job and skips draft PRs. The repository variable `CI_RUNNER=self-hosted` moves both jobs to the owner's Mac (`docs/self-hosted-runner.md`); fork PRs always stay on hosted runners.
 - Check CI with `/ci-status`. Use the `macos-ci-investigator` agent for a failing macOS job.
