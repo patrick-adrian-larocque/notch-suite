@@ -61,6 +61,10 @@ Follow `/port-from-reference` whenever code from them is copied or closely follo
 
 `worktree.baseRef` is `"head"` in `.claude/settings.json`, so worktrees branch from local HEAD and carry unpushed commits. That includes the commits of whatever feature branch HEAD is on, so switch to the branch you want first. Change it to `"fresh"` to branch from `origin/main` instead. There is no `.worktreeinclude`: no gitignored file is needed inside worktrees yet. Add one if that changes.
 
+## Permissions
+
+`.claude/settings.json` allows only the `swift build`, `swift test` and `swift format` commands. Read-only `git` commands such as `git status`, `git diff` and `git log` need no rule: Claude Code runs them without asking, and still asks for write-capable forms like `git diff --output=<file>`. Don't add `Bash(git <cmd> *)` allow rules, because they would approve those write-capable forms too.
+
 ## Secrets
 
 `.claude/settings.json` denies the Read and Grep tools access to `.env` files and signing material (`*.p12`, `*.mobileprovision`, `*.cer`). It does not stop shell commands such as `cat`, so keep real secrets out of the repository.

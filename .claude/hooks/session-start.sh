@@ -24,12 +24,23 @@ install_search_tools() {
     ln -sf "$(command -v fdfind)" /usr/local/bin/fd
   fi
 
+  # ast-grep isn't in Ubuntu's signed archive, so it comes from PyPI. This hook runs
+  # as root, so pin one release and its published wheel hashes (x86_64 and arm64):
+  # a new or tampered upload fails the install instead of running here. To update,
+  # take the version and wheel sha256s from https://pypi.org/project/ast-grep-cli/.
   if ! command -v ast-grep >/dev/null 2>&1; then
-    PIP_ROOT_USER_ACTION=ignore timeout 180 pip install -q ast-grep-cli >/dev/null 2>&1 ||
-      timeout 180 npm install -g --silent @ast-grep/cli >/dev/null 2>&1 ||
-      true
+    local version=0.45.3
+    local sha256_x86_64=2d151b89c6d45c2640338fe5d24b2ee0810224902d603cb271803bf7418054ea
+    local sha256_aarch64=ced023ae9fbc7c779570cd8bcc0fa7626d9561afd60369d3c335bfce2ca565b3
+    local requirements
+    requirements=$(mktemp)
+    printf 'ast-grep-cli==%s --hash=sha256:%s --hash=sha256:%s\n' \
+      "$version" "$sha256_x86_64" "$sha256_aarch64" >"$requirements"
+    PIP_ROOT_USER_ACTION=ignore timeout 180 pip install -q --no-deps --only-binary=:all: \
+      --require-hashes -r "$requirements" >/dev/null 2>&1 || true
+    rm -f "$requirements"
   fi
-  # Both packages also install an `sg` alias that shadows the system `sg` (switch group).
+  # The package also installs an `sg` alias that shadows the system `sg` (switch group).
   if [ -e /usr/local/bin/sg ] && /usr/local/bin/sg --version 2>/dev/null | grep -q ast-grep; then
     rm -f /usr/local/bin/sg
   fi
