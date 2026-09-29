@@ -7,7 +7,7 @@ Closes #
 ## How it was tested
 
 - [ ] Linux: `swift build`, `swift test`, and `swift format lint --strict` (cloud session or CI)
-- [ ] macOS CI (runs once the PR is marked ready for review)
+- [ ] macOS CI (on the self-hosted Mac it runs on every push; on GitHub's runners, once the PR is ready for review)
 - [ ] On a real Mac (only needed for notch placement, live media, AirDrop, or permission prompts)
 
 ## Checklist
