@@ -50,7 +50,7 @@ Follow `/port-from-reference` whenever code from them is copied or closely follo
 ## Workflow
 
 - One issue, one branch, one PR. The branch is `claude/issue-<N>-<slug>` (a cloud session may assign its own branch name instead). The PR follows `.github/pull_request_template.md` and says `Closes #N`.
-- Before starting an issue, look for an open PR that closes it (`Closes #N`) or an unmerged `claude/issue-<N>-*` branch. If one exists, continue on it; never open a second PR for the same issue. `/work-issue` covers fork PRs and multiple matches.
+- Before starting an issue, look for an open PR that closes it (`Closes #N`) or a `claude/issue-<N>-*` branch with no merged or closed PR (`gh pr list --head <branch> --state all`; git ancestry misses squash merges). If one exists, continue on it; never open a second PR for the same issue. `/work-issue` covers fork PRs and multiple matches.
 - Never merge another open PR's branch into yours. If your work needs it, say so in your PR and wait for that PR to merge first.
 - A draft PR is still in progress. Mark it ready for review once the criteria you can check on a draft are verified and the Linux job, if CI runs, is green. Then request a Copilot review. On GitHub's runners, marking it ready is what starts the macOS job. Copilot doesn't review drafts unless the repository turns that on.
 - Fix Copilot's findings on the same PR. Push the fix, reply on each thread with the commit, then re-request a Copilot review. Copilot marks a finding resolved only when it re-reviews a commit that fixes it, so a thread resolved by hand still shows as open in its overview.

@@ -33,12 +33,14 @@ install_search_tools() {
     local sha256_x86_64=2d151b89c6d45c2640338fe5d24b2ee0810224902d603cb271803bf7418054ea
     local sha256_aarch64=ced023ae9fbc7c779570cd8bcc0fa7626d9561afd60369d3c335bfce2ca565b3
     local requirements
-    requirements=$(mktemp)
-    printf 'ast-grep-cli==%s --hash=sha256:%s --hash=sha256:%s\n' \
-      "$version" "$sha256_x86_64" "$sha256_aarch64" >"$requirements"
-    PIP_ROOT_USER_ACTION=ignore timeout 180 pip install -q --no-deps --only-binary=:all: \
-      --require-hashes -r "$requirements" >/dev/null 2>&1 || true
-    rm -f "$requirements"
+    requirements=
+    if requirements=$(mktemp) &&
+      printf 'ast-grep-cli==%s --hash=sha256:%s --hash=sha256:%s\n' \
+        "$version" "$sha256_x86_64" "$sha256_aarch64" >"$requirements"; then
+      PIP_ROOT_USER_ACTION=ignore timeout 180 pip install -q --no-deps --only-binary=:all: \
+        --require-hashes -r "$requirements" >/dev/null 2>&1 || true
+    fi
+    [ -z "$requirements" ] || rm -f "$requirements"
   fi
   # The package also installs an `sg` alias that shadows the system `sg` (switch group).
   if [ -e /usr/local/bin/sg ] && /usr/local/bin/sg --version 2>/dev/null | grep -q ast-grep; then

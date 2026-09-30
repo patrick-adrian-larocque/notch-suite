@@ -1,6 +1,6 @@
 ---
 name: work-issue
-description: Implement a GitHub issue end to end. Reads the issue, branches, implements with tests, runs /swift-check, and opens a draft PR that closes the issue.
+description: Implement a GitHub issue end to end. Reads the issue, continues any existing PR or branch for it (or branches), implements with tests, runs /swift-check, opens or updates the PR that closes the issue, marks it ready, and works Copilot's findings.
 disable-model-invocation: true
 argument-hint: "[issue-number]"
 arguments: [issue]
@@ -11,8 +11,9 @@ Implement GitHub issue #$issue in this repository.
 1. **Read the issue and its comments.**
    - If a "Depends on" issue is still open, stop and report that instead of working around it.
    - If the acceptance criteria are missing or ambiguous, ask instead of guessing.
-2. **Look for existing work first.** Search open PRs whose description closes #$issue (`Closes`, `Fixes` or `Resolves #$issue`), and remote branches named `claude/issue-$issue-*`. A PR that only mentions the issue, for example as a dependency or a follow-up, isn't this issue's PR. Ignore branches already merged into `main` (`git branch -r --merged origin/main` lists them).
+2. **Look for existing work first.** Search open PRs whose description closes #$issue (`Closes`, `Fixes` or `Resolves #$issue`), and remote branches named `claude/issue-$issue-*`. A PR that only mentions the issue, for example as a dependency or a follow-up, isn't this issue's PR. A branch is finished, and ignored, when `gh pr list --head <branch> --state all --json state` shows a merged or closed PR. Don't use git ancestry for this: squash and rebase merges leave the branch's commits out of `main`'s history, and this repo doesn't delete merged branches.
    - One open PR from a branch in this repository: check out that branch and continue there. Never open a second PR for the same issue.
+   - If the branch to continue is already checked out in another worktree (`git worktree list` shows it), git won't check it out a second time. Work in that worktree if it's yours; if it belongs to another session, stop and report it. Don't use `--force`.
    - An open PR from a fork: you can't push to it, so stop and report that PR.
    - A matching branch with no open PR, left by an interrupted run: check it out and continue there. Step 8 opens its PR.
    - More than one open PR or unmerged branch: stop and list them. The owner decides which one continues.
