@@ -47,9 +47,9 @@ version=$(gh release view -R actions/runner --json tagName -q .tagName | sed 's/
 curl -fsSLo runner.tar.gz \
   "https://github.com/actions/runner/releases/download/v${version}/actions-runner-osx-arm64-${version}.tar.gz"
 tar xzf runner.tar.gz && rm runner.tar.gz
-token=$(gh api -X POST repos/patlar104/notch-suite/actions/runners/registration-token -q .token)
+token=$(gh api -X POST repos/patrick-adrian-larocque/notch-suite/actions/runners/registration-token -q .token)
 ./config.sh --unattended --replace \
-  --url https://github.com/patlar104/notch-suite \
+  --url https://github.com/patrick-adrian-larocque/notch-suite \
   --token "$token" \
   --name "$(scutil --get LocalHostName)"
 ./svc.sh install    # a LaunchAgent: runs whenever you're logged in
@@ -63,16 +63,16 @@ GitHub's page for this (**Settings → Actions → Runners → New self-hosted r
 **4. Turn it on.**
 
 ```sh
-gh variable set CI_RUNNER --body self-hosted -R patlar104/notch-suite
+gh variable set CI_RUNNER --body self-hosted -R patrick-adrian-larocque/notch-suite
 ```
 
-The runner should show as **Idle** under Settings → Actions → Runners. To try it, run CI by hand on any branch: `gh workflow run ci.yml -R patlar104/notch-suite --ref <branch>`.
+The runner should show as **Idle** under Settings → Actions → Runners. To try it, run CI by hand on any branch: `gh workflow run ci.yml -R patrick-adrian-larocque/notch-suite --ref <branch>`.
 
 ## Things to know
 
 - **The Mac has to be awake, logged in, and running OrbStack.**
   - While it's off, CI jobs wait in the queue. After 24 hours they fail.
-  - When you're away for a while, switch back to GitHub's runners with `gh variable delete CI_RUNNER -R patlar104/notch-suite`.
+  - When you're away for a while, switch back to GitHub's runners with `gh variable delete CI_RUNNER -R patrick-adrian-larocque/notch-suite`.
 - **Jobs run as your macOS user**, with access to your files. Keep the repo private while the runner is registered.
 - **Swift versions:**
   - The macOS job calls `xcrun swift`, so it always uses the Swift that ships with your selected Xcode. swiftly toolchains and `.swift-version` files don't affect it.
@@ -87,6 +87,6 @@ The runner should show as **Idle** under Settings → Actions → Runners. To tr
 
   ```sh
   cd ~/actions-runner && ./svc.sh stop && ./svc.sh uninstall
-  ./config.sh remove --token "$(gh api -X POST repos/patlar104/notch-suite/actions/runners/remove-token -q .token)"
-  gh variable delete CI_RUNNER -R patlar104/notch-suite
+  ./config.sh remove --token "$(gh api -X POST repos/patrick-adrian-larocque/notch-suite/actions/runners/remove-token -q .token)"
+  gh variable delete CI_RUNNER -R patrick-adrian-larocque/notch-suite
   ```

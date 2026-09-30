@@ -8,7 +8,7 @@
 
 **Tech Stack:** Swift 6.4 (Xcode 27.0 / swiftly 6.4.0 locally, `swift:6.4-noble` in Docker), swift-tools-version 6.0, Swift Testing, `swift format`, Claude Code 2.1.283, the `superpowers`, `pr-review-toolkit`, `code-simplifier`, `claude-md-management`, `plugin-dev` and `swift-lsp` plugins, GitHub CLI.
 
-**Spec:** GitHub issues #3, #4 and #5 in `patlar104/notch-suite` (read with `gh issue view <n>`), plus the `stream` command section of the mediaremote-adapter README (`gh api repos/ungive/mediaremote-adapter/readme`).
+**Spec:** GitHub issues #3, #4 and #5 in `patrick-adrian-larocque/notch-suite` (read with `gh issue view <n>`), plus the `stream` command section of the mediaremote-adapter README (`gh api repos/ungive/mediaremote-adapter/readme`).
 
 ## Global Constraints
 
