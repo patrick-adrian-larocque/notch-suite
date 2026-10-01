@@ -1,4 +1,5 @@
-/// The island's user settings: hover and collapse timing, motion, and appearance.
+/// The island's user settings: hover and collapse timing, motion, appearance,
+/// displays, and system HUDs.
 ///
 /// Every numeric setting has a range, published as a static constant so the
 /// settings panel can bound its sliders with the same values. A value outside
@@ -42,6 +43,19 @@ public struct IslandSettings: Sendable, Equatable {
         }
     }
 
+    /// Which displays show the island.
+    ///
+    /// When the lid closes, the app target moves the island to the next
+    /// display. That is runtime behavior, not a setting.
+    public enum ShowOn: String, Sendable, Hashable, CaseIterable, Codable {
+        /// Only the built-in display. The default.
+        case builtIn
+        /// The display that holds the menu bar, following it when it moves.
+        case mainDisplay
+        /// Every display, each island sized to that display's own notch.
+        case all
+    }
+
     // MARK: Ranges
 
     /// Allowed hover delay, in milliseconds.
@@ -54,6 +68,10 @@ public struct IslandSettings: Sendable, Equatable {
     public static let alertCollapseRange: ClosedRange<Int> = 1...10
     /// Allowed animation speed multiplier.
     public static let speedRange: ClosedRange<Double> = 0.5...2.0
+    /// Allowed notch width preview, in points.
+    public static let notchWidthPreviewRange: ClosedRange<Double> = 160...240
+    /// The settings slider's step for `notchWidthPreview`, in points.
+    public static let notchWidthPreviewStep: Double = 2
 
     /// The settings a fresh install starts with.
     public static let defaults = IslandSettings()
@@ -106,7 +124,7 @@ public struct IslandSettings: Sendable, Equatable {
     /// Animation speed multiplier, where 2 is twice as fast. Default 1.0, range
     /// `speedRange`. A NaN resets it to the default.
     public var speed: Double {
-        didSet { speed = Self.clampSpeed(speed) }
+        didSet { speed = Self.clamp(speed, to: Self.speedRange, nanFallback: 1.0) }
     }
     /// Whether to replace size animations with a short fade. Default `false`.
     public var reduceMotion: Bool
@@ -117,6 +135,27 @@ public struct IslandSettings: Sendable, Equatable {
     public var accent: Accent
     /// Whether to draw the outline of the physical notch. Default `false`.
     public var showNotchOutline: Bool
+    /// The notch width the settings slider previews, in points. Default 196,
+    /// range `notchWidthPreviewRange`. A NaN resets it to the default.
+    ///
+    /// This only drives the settings preview. The island's real width comes
+    /// from `NotchGeometry`, measured from the display at runtime.
+    public var notchWidthPreview: Double {
+        didSet {
+            notchWidthPreview = Self.clamp(
+                notchWidthPreview, to: Self.notchWidthPreviewRange, nanFallback: 196)
+        }
+    }
+
+    // MARK: Displays and system HUDs
+
+    /// Which displays show the island. Default `.builtIn`.
+    public var showOn: ShowOn
+    /// Whether volume and brightness changes show in the island instead of the
+    /// system HUD. Default `true`.
+    ///
+    /// Best effort: macOS may still show its own popup as well (see #26).
+    public var replaceSystemHUDs: Bool
 
     /// Creates settings, clamping every numeric value into its range.
     ///
@@ -134,7 +173,10 @@ public struct IslandSettings: Sendable, Equatable {
         speed: Double = 1.0,
         reduceMotion: Bool = false,
         accent: Accent = .amber,
-        showNotchOutline: Bool = false
+        showNotchOutline: Bool = false,
+        notchWidthPreview: Double = 196,
+        showOn: ShowOn = .builtIn,
+        replaceSystemHUDs: Bool = true
     ) {
         // Observers don't run during init, so clamp here explicitly.
         self.hoverAction = hoverAction
@@ -146,10 +188,14 @@ public struct IslandSettings: Sendable, Equatable {
         self.alertExpand = alertExpand
         self.alertCollapseSeconds = Self.clamp(alertCollapseSeconds, to: Self.alertCollapseRange)
         self.motionCurve = motionCurve
-        self.speed = Self.clampSpeed(speed)
+        self.speed = Self.clamp(speed, to: Self.speedRange, nanFallback: 1.0)
         self.reduceMotion = reduceMotion
         self.accent = accent
         self.showNotchOutline = showNotchOutline
+        self.notchWidthPreview = Self.clamp(
+            notchWidthPreview, to: Self.notchWidthPreviewRange, nanFallback: 196)
+        self.showOn = showOn
+        self.replaceSystemHUDs = replaceSystemHUDs
     }
 
     /// Restores every setting to its default.
@@ -161,8 +207,10 @@ public struct IslandSettings: Sendable, Equatable {
         min(max(value, range.lowerBound), range.upperBound)
     }
 
-    private static func clampSpeed(_ value: Double) -> Double {
-        value.isNaN ? 1.0 : clamp(value, to: speedRange)
+    private static func clamp(
+        _ value: Double, to range: ClosedRange<Double>, nanFallback: Double
+    ) -> Double {
+        value.isNaN ? nanFallback : clamp(value, to: range)
     }
 }
 
@@ -180,6 +228,9 @@ extension IslandSettings: Codable {
         case reduceMotion
         case accent
         case showNotchOutline
+        case notchWidthPreview
+        case showOn
+        case replaceSystemHUDs
     }
 
     /// Decodes settings leniently, so stored settings survive app updates.
@@ -209,7 +260,10 @@ extension IslandSettings: Codable {
             speed: value(.speed, fallback.speed),
             reduceMotion: value(.reduceMotion, fallback.reduceMotion),
             accent: value(.accent, fallback.accent),
-            showNotchOutline: value(.showNotchOutline, fallback.showNotchOutline)
+            showNotchOutline: value(.showNotchOutline, fallback.showNotchOutline),
+            notchWidthPreview: value(.notchWidthPreview, fallback.notchWidthPreview),
+            showOn: value(.showOn, fallback.showOn),
+            replaceSystemHUDs: value(.replaceSystemHUDs, fallback.replaceSystemHUDs)
         )
     }
 }

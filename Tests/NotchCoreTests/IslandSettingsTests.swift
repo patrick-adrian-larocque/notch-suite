@@ -20,6 +20,9 @@ import Testing
         #expect(settings.reduceMotion == false)
         #expect(settings.accent == .amber)
         #expect(settings.showNotchOutline == false)
+        #expect(settings.notchWidthPreview == 196)
+        #expect(settings.showOn == .builtIn)
+        #expect(settings.replaceSystemHUDs == true)
         #expect(settings == IslandSettings.defaults)
     }
 
@@ -29,12 +32,15 @@ import Testing
         #expect(IslandSettings.collapseDelayRange == 0...3000)
         #expect(IslandSettings.alertCollapseRange == 1...10)
         #expect(IslandSettings.speedRange == 0.5...2.0)
+        #expect(IslandSettings.notchWidthPreviewRange == 160...240)
+        #expect(IslandSettings.notchWidthPreviewStep == 2)
     }
 
     @Test func enumCasesMatchTheDesignCanvas() {
         #expect(IslandSettings.HoverAction.allCases == [.off, .peek, .open])
         #expect(IslandSettings.MotionCurve.allCases == [.bouncy, .snappy, .smooth])
         #expect(IslandSettings.Accent.allCases == [.amber, .blue, .green, .pink])
+        #expect(IslandSettings.ShowOn.allCases == [.builtIn, .mainDisplay, .all])
     }
 
     @Test(arguments: [
@@ -126,13 +132,37 @@ import Testing
         #expect(settings.speed == 1.0)
     }
 
+    @Test func notchWidthPreviewClampsBothEnds() {
+        #expect(IslandSettings(notchWidthPreview: 159.9).notchWidthPreview == 160)
+        #expect(IslandSettings(notchWidthPreview: -.infinity).notchWidthPreview == 160)
+        #expect(IslandSettings(notchWidthPreview: 160).notchWidthPreview == 160)
+        #expect(IslandSettings(notchWidthPreview: 240).notchWidthPreview == 240)
+        #expect(IslandSettings(notchWidthPreview: 240.1).notchWidthPreview == 240)
+        #expect(IslandSettings(notchWidthPreview: .infinity).notchWidthPreview == 240)
+
+        var settings = IslandSettings()
+        settings.notchWidthPreview = 100
+        #expect(settings.notchWidthPreview == 160)
+        settings.notchWidthPreview = 500
+        #expect(settings.notchWidthPreview == 240)
+    }
+
+    @Test func notchWidthPreviewNaNFallsBackToDefault() {
+        #expect(IslandSettings(notchWidthPreview: .nan).notchWidthPreview == 196)
+        var settings = IslandSettings(notchWidthPreview: 220)
+        settings.notchWidthPreview = .nan
+        #expect(settings.notchWidthPreview == 196)
+    }
+
     @Test func inRangeValuesAreKept() {
         let settings = IslandSettings(
             hoverDelayMilliseconds: 300, leaveDelayMilliseconds: 700,
-            collapseDelayMilliseconds: 2000, alertCollapseSeconds: 7, speed: 1.25)
+            collapseDelayMilliseconds: 2000, alertCollapseSeconds: 7, speed: 1.25,
+            notchWidthPreview: 210)
         #expect(settings.hoverDelayMilliseconds == 300)
         #expect(settings.leaveDelayMilliseconds == 700)
         #expect(settings.collapseDelayMilliseconds == 2000)
+        #expect(settings.notchWidthPreview == 210)
         #expect(settings.alertCollapseSeconds == 7)
         #expect(settings.speed == 1.25)
     }
@@ -161,7 +191,10 @@ import Testing
         speed: 1.75,
         reduceMotion: true,
         accent: .pink,
-        showNotchOutline: true
+        showNotchOutline: true,
+        notchWidthPreview: 224,
+        showOn: .all,
+        replaceSystemHUDs: false
     )
 
     @Test(arguments: [IslandSettings.defaults, everythingChanged])
@@ -207,6 +240,9 @@ import Testing
             case .reduceMotion: expected.reduceMotion = defaults.reduceMotion
             case .accent: expected.accent = defaults.accent
             case .showNotchOutline: expected.showNotchOutline = defaults.showNotchOutline
+            case .notchWidthPreview: expected.notchWidthPreview = defaults.notchWidthPreview
+            case .showOn: expected.showOn = defaults.showOn
+            case .replaceSystemHUDs: expected.replaceSystemHUDs = defaults.replaceSystemHUDs
             case nil: Issue.record("Unexpected encoded key \(key)")
             }
             #expect(decoded == expected, "missing \(key)")
@@ -217,24 +253,28 @@ import Testing
         let decoded = try decode(
             """
             {"hoverDelayMilliseconds": -5, "leaveDelayMilliseconds": 99999,
-             "collapseDelayMilliseconds": 3001, "alertCollapseSeconds": 0, "speed": 3}
+             "collapseDelayMilliseconds": 3001, "alertCollapseSeconds": 0, "speed": 3,
+             "notchWidthPreview": 120}
             """)
         #expect(decoded.hoverDelayMilliseconds == 0)
         #expect(decoded.leaveDelayMilliseconds == 1500)
         #expect(decoded.collapseDelayMilliseconds == 3000)
         #expect(decoded.alertCollapseSeconds == 1)
         #expect(decoded.speed == 2.0)
+        #expect(decoded.notchWidthPreview == 160)
     }
 
     @Test func unknownOrMistypedValuesFallBackToDefaults() throws {
         let decoded = try decode(
             """
             {"accent": "purple", "motionCurve": 3, "hoverDelayMilliseconds": "fast",
-             "reduceMotion": true}
+             "showOn": "projector", "replaceSystemHUDs": "yes", "reduceMotion": true}
             """)
         #expect(decoded.accent == .amber)
         #expect(decoded.motionCurve == .bouncy)
         #expect(decoded.hoverDelayMilliseconds == 120)
+        #expect(decoded.showOn == .builtIn)
+        #expect(decoded.replaceSystemHUDs == true)
         #expect(decoded.reduceMotion == true)
     }
 
