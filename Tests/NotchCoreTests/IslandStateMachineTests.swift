@@ -519,6 +519,18 @@ import Testing
         #expect(machine.displayedLevel == .open)
     }
 
+    @Test func collapseEndsTheHud() {
+        let machine = makeMachine()
+        machine.click()
+        machine.hudKeyPressed(.volume)
+        machine.collapse()
+        #expect(machine.hud == nil)
+        #expect(machine.displayedLevel == .compact)
+        #expect(scheduler.pendingCount == 0)
+        scheduler.advance(milliseconds: 5000)
+        #expect(machine.displayedLevel == .compact)
+    }
+
     @Test func alertEndsTheHud() {
         let machine = makeMachine()
         machine.hudKeyPressed(.brightness)

@@ -1,6 +1,8 @@
 import Observation
 
-/// An event that takes over the island and arrives open.
+/// An event that takes over the island.
+///
+/// It arrives open when ``IslandSettings/alertExpand`` is on, and compact otherwise.
 public enum IslandAlert: String, Sendable, Hashable, CaseIterable {
     /// Power was connected.
     case charging
@@ -25,8 +27,9 @@ public enum SystemHUDKind: String, Sendable, Hashable, CaseIterable {
 
 /// Decides the island's mode and level from pointer, focus, click and alert events.
 ///
-/// Every delay comes from `settings` and runs on the injected ``DelayScheduler``, so
-/// the rules are testable without real time. The rules follow the design prototype:
+/// The hover, leave, collapse and alert delays come from `settings`; the HUD uses the
+/// fixed ``hudDuration``. Every delay runs on the injected ``DelayScheduler``, so the
+/// rules are testable without real time. The rules follow the design prototype:
 ///
 /// - Resting on the compact island for the hover delay grows it to peek, or to open
 ///   when ``IslandSettings/hoverAction`` is `.open`. Hover `.off` does nothing.
