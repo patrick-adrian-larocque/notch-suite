@@ -85,17 +85,27 @@ import Testing
     }
 
     @Test(arguments: IslandMode.allCases, notchWidths)
-    func openIgnoresTheNotch(mode: IslandMode, notchWidth: Double) {
-        #expect(
-            IslandLayout(notchWidth: notchWidth).size(for: mode, at: .open)
-                == IslandLayout.design.size(for: mode, at: .open))
+    func openIsTheDesignSizeButNeverNarrowerThanPeek(mode: IslandMode, notchWidth: Double) {
+        let layout = IslandLayout(notchWidth: notchWidth)
+        let open = layout.size(for: mode, at: .open)
+        let designOpen = IslandLayout.design.size(for: mode, at: .open)
+        let peek = layout.size(for: mode, at: .peek)
+        #expect(open.width == max(designOpen.width, peek.width))
+        #expect(open.height == designOpen.height)
+        #expect(open.cornerRadius == designOpen.cornerRadius)
     }
 
-    @Test(arguments: IslandMode.allCases)
-    func eachLevelIsAtLeastAsLargeAsTheOneBelow(mode: IslandMode) {
-        let sizes = IslandLevel.allCases.sorted().map {
-            IslandLayout.design.size(for: mode, at: $0)
-        }
+    @Test func openWidensOnAWideNotch() {
+        let wide = IslandLayout(notchWidth: 240)
+        #expect(wide.size(for: .nowPlaying, at: .open).width == 484)
+        #expect(wide.size(for: .charging, at: .open).width == 444)
+        #expect(IslandLayout(notchWidth: 160).size(for: .nowPlaying, at: .open).width == 460)
+    }
+
+    @Test(arguments: IslandMode.allCases, notchWidths)
+    func eachLevelIsAtLeastAsLargeAsTheOneBelow(mode: IslandMode, notchWidth: Double) {
+        let layout = IslandLayout(notchWidth: notchWidth)
+        let sizes = IslandLevel.allCases.sorted().map { layout.size(for: mode, at: $0) }
         for (smaller, larger) in zip(sizes, sizes.dropFirst()) {
             #expect(smaller.width <= larger.width)
             #expect(smaller.height < larger.height)
