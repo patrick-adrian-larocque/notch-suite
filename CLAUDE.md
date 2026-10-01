@@ -1,14 +1,14 @@
 # Notch Suite
 
-A macOS notch utility built from scratch: Now Playing media control, a file drop shelf, and system HUD replacements. GPLv3. Only `NotchCore` exists so far; the UI and app targets are planned.
+A macOS notch utility built from scratch: Now Playing media control, a file drop shelf, and system HUD replacements. GPLv3. `NotchCore` and a first app shell exist; `NotchUI` is planned.
 
 ## Architecture
 
 Three layers, each depending only on the one before it:
 
 1. `NotchCore` (`Sources/NotchCore`): pure Swift with no AppKit, SwiftUI, or Combine. It builds and tests on Linux. Use `Observation` and async sequences for reactive state.
-2. `NotchUI` (planned): SwiftUI views. macOS only.
-3. App target (planned): the macOS app and its system integration.
+2. `NotchUI` (planned): SwiftUI views. macOS only. Until it exists, the few views live in the app target, because a SwiftUI target in `Package.swift` would break `swift build` on Linux.
+3. App target `NotchSuite` (`App/`, generated from `project.yml` by XcodeGen): the macOS app and its system integration.
 
 Mac-only services (MediaRemote, screen and notch geometry, the file system, AirDrop) sit behind protocols defined in `NotchCore` and are implemented in the app target. That keeps the logic testable on Linux.
 
@@ -19,20 +19,28 @@ Run from the repository root.
 ```sh
 swift build --build-tests
 swift test --skip-build
-swift format lint --strict --recursive Sources Tests
+swift format lint --strict --recursive Sources Tests App
 ```
 
 - `/swift-check` runs all three in order and reports one line per step. Run it before every push.
 - `swift test --skip-build` only runs what `swift build --build-tests` already built, so run them in that order. On its own it reports failures.
-- To fix formatting: `swift format format --in-place --recursive Sources Tests`.
+- To fix formatting: `swift format format --in-place --recursive Sources Tests App`.
 - On a Mac these run natively. In Claude Code cloud sessions `swift` is a wrapper that runs Linux Swift in Docker (`.claude/hooks/session-start.sh`).
-- To run the Linux side of CI from a Mac, use `SWIFT_IMAGE=swift:6.4-noble scripts/ci-swift.sh test` for the build and tests, and `SWIFT_IMAGE=swift:6.4-noble scripts/ci-swift.sh format lint --strict --recursive Sources Tests` for the lint. It needs Docker running (OrbStack on the owner's Mac) and shares `.build` with the macOS build, which works.
-- The macOS app build command will be added here once the app target exists.
+- To run the Linux side of CI from a Mac, use `SWIFT_IMAGE=swift:6.4-noble scripts/ci-swift.sh test` for the build and tests, and `SWIFT_IMAGE=swift:6.4-noble scripts/ci-swift.sh format lint --strict --recursive Sources Tests App` for the lint. It needs Docker running (OrbStack on the owner's Mac) and shares `.build` with the macOS build, which works.
+- The macOS app needs a Mac with Xcode and XcodeGen (`brew install xcodegen`). Generate the Xcode project first; it is gitignored, so regenerate it after pulling a change to `project.yml` or adding or removing a file in `App/`:
+
+  ```sh
+  xcodegen generate
+  xcodebuild build -project NotchSuite.xcodeproj -scheme NotchSuite -configuration Debug -destination 'platform=macOS' -derivedDataPath build/DerivedData
+  ```
+
+  Then open `NotchSuite.xcodeproj` and run the `NotchSuite` scheme, or open `build/DerivedData/Build/Products/Debug/NotchSuite.app`. It has no Dock icon; quit it from its status item. The project signs ad hoc ("Sign to Run Locally"); CI adds `CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` to build without signing.
 - `.swift-version` pins swiftly's toolchain for this folder and is gitignored. CI uses Xcode's Swift on macOS and the `swift:6.4-noble` image on Linux.
 
 ## Key files
 
 - `Package.swift`: targets `NotchCore` and `NotchCoreTests` (macOS 14+, Swift tools 6.0).
+- `project.yml`: the XcodeGen spec for the `NotchSuite` app target (macOS 14+, Swift 6, `LSUIElement`), which depends on the package's `NotchCore` product. `App/`: its sources.
 - `.swift-format`: the formatter config that `swift format lint --strict` enforces.
 - `.github/workflows/ci.yml`: the Linux and macOS jobs. `docs/self-hosted-runner.md` covers the Mac runner.
 - `THIRD_PARTY_LICENSES`: license texts for anything adapted from the reference projects.

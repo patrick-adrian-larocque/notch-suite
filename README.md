@@ -6,9 +6,10 @@ few excellent open-source projects.
 
 ## Status
 
-Early scaffold. `NotchCore` (pure Swift, tested on Linux and macOS) has the first
-piece of logic: a parser for mediaremote-adapter's `stream` output. The UI and
-app targets are not started yet.
+Early scaffold. `NotchCore` (pure Swift, tested on Linux and macOS) has a parser
+for mediaremote-adapter's `stream` output and the island's layout and notch
+geometry. The app is a shell: a black placeholder island over the notch and a
+status item with Quit.
 
 ## License
 
@@ -36,6 +37,10 @@ macOS 14+, Xcode. The core builds with SwiftPM:
 
     swift build --build-tests
     swift test --skip-build
-    swift format lint --strict --recursive Sources Tests
+    swift format lint --strict --recursive Sources Tests App
 
-The macOS app target will be added later.
+The app's Xcode project is generated from `project.yml` with
+[XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`):
+
+    xcodegen generate
+    open NotchSuite.xcodeproj

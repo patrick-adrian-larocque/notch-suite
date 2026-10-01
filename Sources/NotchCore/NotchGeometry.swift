@@ -126,6 +126,17 @@ public struct NotchGeometry: Sendable, Equatable {
         min(leftAreaWidth, rightAreaWidth)
     }
 
+    /// The notch's centre line, measured from the screen's left edge.
+    public var notchMidX: Double {
+        leftAreaWidth + notchWidth / 2
+    }
+
+    /// The left edge of an island of `islandWidth` centred on the notch, measured from the
+    /// screen's left edge. Negative when the island is wider than the room to the notch's left.
+    public func islandMinX(forIslandWidth islandWidth: Double) -> Double {
+        notchMidX - islandWidth / 2
+    }
+
     private static func usable(_ value: Double?) -> Double? {
         guard let value, value.isFinite, value >= 0 else { return nil }
         return value

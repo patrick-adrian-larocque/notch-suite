@@ -29,6 +29,12 @@ xcode-select -p                  # should print /Applications/Xcode.app/Contents
 sudo xcodebuild -license accept
 ```
 
+The macOS job also generates the app's Xcode project with XcodeGen. If it's missing, the job installs it with Homebrew on every run, so install it once:
+
+```sh
+brew install xcodegen
+```
+
 **2. OrbStack.**
 1. Run `brew install --cask orbstack`.
 2. Open OrbStack once so it finishes setup.
