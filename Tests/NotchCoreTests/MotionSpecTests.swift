@@ -83,6 +83,12 @@ private func isClose(_ a: Double, _ b: Double) -> Bool {
         Case(
             curve: .bouncy, speed: 1.25, morph: 0.496, revealDuration: 0.304,
             revealDelay: 0.128, hudMorph: 0.36, hudRevealDuration: 0.24, hudRevealDelay: 0.08),
+        Case(
+            curve: .snappy, speed: 1.25, morph: 0.304, revealDuration: 0.304,
+            revealDelay: 0.128, hudMorph: 0.36, hudRevealDuration: 0.24, hudRevealDelay: 0.08),
+        Case(
+            curve: .smooth, speed: 1.25, morph: 0.4, revealDuration: 0.304,
+            revealDelay: 0.128, hudMorph: 0.36, hudRevealDuration: 0.24, hudRevealDelay: 0.08),
     ]
 
     @Test(arguments: cases)
