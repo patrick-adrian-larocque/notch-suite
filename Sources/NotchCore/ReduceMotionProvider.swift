@@ -2,7 +2,10 @@
 ///
 /// The app target implements this on top of the macOS accessibility setting.
 /// `MotionSpec` turns reduce motion on when this or the in-app toggle is on.
-public protocol ReduceMotionProvider: Sendable {
+/// It is main-actor isolated because the app reads the setting from `NSWorkspace` on the
+/// main thread, as `NotchGeometryProvider` does with `NSScreen`.
+@MainActor
+public protocol ReduceMotionProvider {
     /// Whether the system's reduce-motion setting is on right now.
     var isReduceMotionEnabled: Bool { get }
 

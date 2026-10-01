@@ -143,6 +143,7 @@ private func isClose(_ a: Double, _ b: Double) -> Bool {
         (false, true, true),
         (true, true, true),
     ])
+    @MainActor
     func reduceMotionIsOnWhenEitherSourceIs(inApp: Bool, system: Bool, expected: Bool) {
         let settings = IslandSettings(reduceMotion: inApp)
         #expect(
@@ -189,7 +190,7 @@ private func isClose(_ a: Double, _ b: Double) -> Bool {
 
     // MARK: Provider
 
-    @Test func providerStreamYieldsTheCurrentValue() async {
+    @Test @MainActor func providerStreamYieldsTheCurrentValue() async {
         let provider = FixedReduceMotionProvider(isReduceMotionEnabled: true)
         var values: [Bool] = []
         for await value in provider.reduceMotionUpdates() {
