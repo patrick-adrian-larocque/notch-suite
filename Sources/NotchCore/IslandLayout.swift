@@ -71,7 +71,9 @@ public struct IslandSize: Sendable, Hashable {
 ///
 /// Compact and peek sizes wrap the notch: their width is `N + 2W`, where `N` is the
 /// notch width and `W` is the mode's ``IslandMode/compactWing`` or
-/// ``IslandMode/peekWing``. Open sizes are fixed. With the design's 196 pt notch this
+/// ``IslandMode/peekWing``. Open sizes are fixed, except that open is never narrower
+/// than peek: on a notch wide enough to push peek past the design's open width, open
+/// takes the peek width. With the design's 196 pt notch this
 /// reproduces the canvas sizes exactly; on a Mac with a different notch, pass its width.
 public struct IslandLayout: Sendable, Hashable {
     /// The notch width the design canvas was drawn against, in points.
@@ -100,11 +102,19 @@ public struct IslandLayout: Sendable, Hashable {
                 height: mode == .idle ? 36 : 40,
                 cornerRadius: mode == .idle ? 12 : 14)
         case .open:
-            Self.openSize(for: mode)
+            openSize(for: mode)
         }
     }
 
-    private static func openSize(for mode: IslandMode) -> IslandSize {
+    /// The design's open size, widened to the peek width when a wide notch makes peek
+    /// wider, so opening never narrows the island.
+    private func openSize(for mode: IslandMode) -> IslandSize {
+        var size = Self.designOpenSize(for: mode)
+        size.width = max(size.width, notchWidth + 2 * mode.peekWing)
+        return size
+    }
+
+    private static func designOpenSize(for mode: IslandMode) -> IslandSize {
         switch mode {
         case .idle: IslandSize(width: 440, height: 156, cornerRadius: 30)
         case .nowPlaying: IslandSize(width: 460, height: 206, cornerRadius: 32)
