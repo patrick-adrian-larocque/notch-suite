@@ -147,6 +147,25 @@ import Testing
         #expect(physical.maximumWingWidth == 657)
     }
 
+    @Test func islandIsCentredOnTheNotch() {
+        let physical = NotchGeometry(metrics: notched)
+        #expect(physical.notchMidX == 756)
+        #expect(physical.islandMinX(forIslandWidth: 198) == 657)
+        #expect(physical.islandMinX(forIslandWidth: 350) == 581)
+
+        let asymmetric = NotchGeometry(
+            metrics: ScreenMetrics(
+                screenWidth: 1728,
+                topInset: 32.5,
+                auxiliaryTopLeftWidth: 764.25,
+                auxiliaryTopRightWidth: 763.75))
+        #expect(asymmetric.notchMidX == 864.25)
+
+        let virtual = NotchGeometry(metrics: ScreenMetrics(screenWidth: 1440, topInset: 24))
+        #expect(virtual.notchMidX == 720)
+        #expect(virtual.islandMinX(forIslandWidth: 196) == 622)
+    }
+
     @MainActor
     @Test func providerProducesGeometry() {
         struct FixedProvider: NotchGeometryProvider {
