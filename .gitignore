@@ -37,3 +37,6 @@ Package.resolved
 .claude/settings.local.json
 CLAUDE.local.md
 .claude/worktrees/
+
+# XcodeGen output; regenerate with `xcodegen generate` (project.yml is the source)
+NotchSuite.xcodeproj/

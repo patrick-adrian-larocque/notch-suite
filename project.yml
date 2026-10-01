@@ -1,0 +1,46 @@
+# XcodeGen spec for the macOS app. Generate the Xcode project with `xcodegen generate`;
+# NotchSuite.xcodeproj is gitignored, so this file is the source of truth.
+name: NotchSuite
+
+options:
+  minimumXcodeGenVersion: 2.46.0
+  bundleIdPrefix: com.patricklarocque
+  deploymentTarget:
+    macOS: "14.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+
+packages:
+  # The Swift package at the repository root, which provides NotchCore.
+  NotchSuitePackage:
+    path: .
+
+targets:
+  NotchSuite:
+    type: application
+    platform: macOS
+    sources:
+      - App
+    dependencies:
+      - package: NotchSuitePackage
+        product: NotchCore
+    scheme: {}
+    settings:
+      base:
+        PRODUCT_NAME: NotchSuite
+        PRODUCT_BUNDLE_IDENTIFIER: com.patricklarocque.NotchSuite
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: "6.0"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Notch Suite
+        # No Dock icon and no app switcher entry; the status item is the app's only UI.
+        INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Licensed under the GNU GPLv3."
+        # Ad-hoc "Sign to Run Locally", so the app builds and runs without a team.
+        # CI turns signing off entirely.
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_HARDENED_RUNTIME: NO
