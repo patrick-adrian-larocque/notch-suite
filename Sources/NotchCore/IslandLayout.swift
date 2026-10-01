@@ -6,6 +6,30 @@ public enum IslandMode: String, Sendable, Hashable, CaseIterable {
     case message
     case charging
     case shelf
+
+    /// How far the compact island extends past each side of the notch, in points.
+    public var compactWing: Double {
+        switch self {
+        case .idle: 0
+        case .nowPlaying: 76
+        case .timer: 62
+        case .message: 52
+        case .charging: 72
+        case .shelf: 52
+        }
+    }
+
+    /// How far the peek island extends past each side of the notch, in points.
+    public var peekWing: Double {
+        switch self {
+        case .idle: 18
+        case .nowPlaying: 122
+        case .timer: 102
+        case .message: 122
+        case .charging: 102
+        case .shelf: 92
+        }
+    }
 }
 
 /// How far the island is expanded, from smallest to largest.
@@ -45,9 +69,10 @@ public struct IslandSize: Sendable, Hashable {
 
 /// Maps a mode and level to the island's size.
 ///
-/// Peek and open sizes are fixed. Compact sizes hug the notch, so their width is the
-/// notch width plus a per-mode extra. With the design's 196 pt notch this reproduces
-/// the canvas sizes exactly; on a Mac with a different notch, pass its width.
+/// Compact and peek sizes wrap the notch: their width is `N + 2W`, where `N` is the
+/// notch width and `W` is the mode's ``IslandMode/compactWing`` or
+/// ``IslandMode/peekWing``. Open sizes are fixed. With the design's 196 pt notch this
+/// reproduces the canvas sizes exactly; on a Mac with a different notch, pass its width.
 public struct IslandLayout: Sendable, Hashable {
     /// The notch width the design canvas was drawn against, in points.
     public static let designNotchWidth: Double = 196
@@ -65,39 +90,17 @@ public struct IslandLayout: Sendable, Hashable {
     public func size(for mode: IslandMode, at level: IslandLevel) -> IslandSize {
         switch level {
         case .compact:
-            let height: Double = mode == .idle ? 32 : 36
-            let cornerRadius: Double = mode == .idle ? 10 : 12
-            return IslandSize(
-                width: notchWidth + Self.compactExtraWidth(for: mode),
-                height: height,
-                cornerRadius: cornerRadius)
+            IslandSize(
+                width: notchWidth + 2 * mode.compactWing,
+                height: mode == .idle ? 32 : 36,
+                cornerRadius: mode == .idle ? 10 : 12)
         case .peek:
-            return Self.peekSize(for: mode)
+            IslandSize(
+                width: notchWidth + 2 * mode.peekWing,
+                height: mode == .idle ? 36 : 40,
+                cornerRadius: mode == .idle ? 12 : 14)
         case .open:
-            return Self.openSize(for: mode)
-        }
-    }
-
-    /// How much wider than the notch the compact island is, in points.
-    static func compactExtraWidth(for mode: IslandMode) -> Double {
-        switch mode {
-        case .idle: 0
-        case .nowPlaying: 152
-        case .timer: 124
-        case .message: 104
-        case .charging: 144
-        case .shelf: 104
-        }
-    }
-
-    private static func peekSize(for mode: IslandMode) -> IslandSize {
-        switch mode {
-        case .idle: IslandSize(width: 232, height: 36, cornerRadius: 12)
-        case .nowPlaying: IslandSize(width: 440, height: 40, cornerRadius: 14)
-        case .timer: IslandSize(width: 400, height: 40, cornerRadius: 14)
-        case .message: IslandSize(width: 440, height: 40, cornerRadius: 14)
-        case .charging: IslandSize(width: 400, height: 40, cornerRadius: 14)
-        case .shelf: IslandSize(width: 380, height: 40, cornerRadius: 14)
+            Self.openSize(for: mode)
         }
     }
 

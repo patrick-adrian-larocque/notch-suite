@@ -45,20 +45,50 @@ import Testing
         #expect(IslandLayout.design == IslandLayout(notchWidth: IslandLayout.designNotchWidth))
     }
 
-    @Test(arguments: IslandMode.allCases)
-    func compactWidthFollowsTheNotch(mode: IslandMode) {
-        let design = IslandLayout.design.size(for: mode, at: .compact)
-        let wider = IslandLayout(notchWidth: 210).size(for: mode, at: .compact)
-        #expect(wider.width == design.width + 14)
-        #expect(wider.height == design.height)
-        #expect(wider.cornerRadius == design.cornerRadius)
+    /// The canvas's per-mode wings, as (compact, peek).
+    static let wings: [(IslandMode, Double, Double)] = [
+        (.idle, 0, 18),
+        (.nowPlaying, 76, 122),
+        (.timer, 62, 102),
+        (.message, 52, 122),
+        (.charging, 72, 102),
+        (.shelf, 52, 92),
+    ]
+
+    @Test(arguments: wings)
+    func wingsMatchCanvas(mode: IslandMode, compact: Double, peek: Double) {
+        #expect(mode.compactWing == compact)
+        #expect(mode.peekWing == peek)
     }
 
-    @Test(arguments: IslandMode.allCases, [IslandLevel.peek, .open])
-    func peekAndOpenIgnoreTheNotch(mode: IslandMode, level: IslandLevel) {
+    /// The ends and middle of the canvas's notch-width preview slider.
+    static let notchWidths: [Double] = [160, 196, 240]
+
+    @Test(arguments: wings, notchWidths)
+    func compactAndPeekWidthIsNotchPlusTwoWings(
+        wing: (IslandMode, Double, Double), notchWidth: Double
+    ) {
+        let (mode, compactWing, peekWing) = wing
+        let layout = IslandLayout(notchWidth: notchWidth)
+        let compact = layout.size(for: mode, at: .compact)
+        let peek = layout.size(for: mode, at: .peek)
+        #expect(compact.width == notchWidth + 2 * compactWing)
+        #expect(peek.width == notchWidth + 2 * peekWing)
+
+        // Only the width follows the notch.
+        let designCompact = IslandLayout.design.size(for: mode, at: .compact)
+        let designPeek = IslandLayout.design.size(for: mode, at: .peek)
+        #expect(compact.height == designCompact.height)
+        #expect(compact.cornerRadius == designCompact.cornerRadius)
+        #expect(peek.height == designPeek.height)
+        #expect(peek.cornerRadius == designPeek.cornerRadius)
+    }
+
+    @Test(arguments: IslandMode.allCases, notchWidths)
+    func openIgnoresTheNotch(mode: IslandMode, notchWidth: Double) {
         #expect(
-            IslandLayout(notchWidth: 210).size(for: mode, at: level)
-                == IslandLayout.design.size(for: mode, at: level))
+            IslandLayout(notchWidth: notchWidth).size(for: mode, at: .open)
+                == IslandLayout.design.size(for: mode, at: .open))
     }
 
     @Test(arguments: IslandMode.allCases)
