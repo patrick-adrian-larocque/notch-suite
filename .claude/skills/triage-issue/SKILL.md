@@ -1,6 +1,9 @@
 ---
 name: triage-issue
 description: Triage a GitHub issue. Applies area labels, flags needs-mac, and asks the author for any missing required details. The issue-triage workflow runs it on newly opened issues.
+# It labels issues and posts comments, so only a person or the triage workflow's
+# `/triage-issue <n>` prompt may start it, never Claude on its own.
+disable-model-invocation: true
 argument-hint: "[issue-number]"
 arguments: [issue]
 allowed-tools:

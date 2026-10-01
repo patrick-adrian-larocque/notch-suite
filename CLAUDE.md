@@ -49,7 +49,12 @@ Follow `/port-from-reference` whenever code from them is copied or closely follo
 
 ## Workflow
 
-- One branch per issue, named `claude/issue-<N>-<slug>`. Open a draft PR that follows `.github/pull_request_template.md` and says `Closes #N`.
+- One issue, one branch, one PR. The branch is `claude/issue-<N>-<slug>` (a cloud session may assign its own branch name instead). The PR follows `.github/pull_request_template.md` and says `Closes #N`.
+- Before starting an issue, look for an open PR that closes it (`Closes #N`) or an unfinished `claude/issue-<N>-*` branch. A branch is finished only when it has no open PR and at least one merged or closed PR; an open PR always wins. Check with `gh pr list --head "<name>" --state all --json state,number`, using the bare branch name without `origin/` (with the prefix it returns `[]`). Git ancestry misses squash merges. If one exists, continue on it; never open a second PR for the same issue. `/work-issue` covers fork PRs and multiple matches.
+- Never merge another open PR's branch into yours. If your work needs it, say so in your PR and wait for that PR to merge first.
+- A draft PR is still in progress. Mark it ready for review once the criteria you can check on a draft are verified and the Linux job, if CI runs, is green. Then request a Copilot review. On GitHub's runners, marking it ready is what starts the macOS job. Copilot doesn't review drafts unless the repository turns that on.
+- Fix Copilot's findings on the same PR. Push the fix, reply on each thread with the commit, then re-request a Copilot review. Copilot marks a finding resolved only when it re-reviews a commit that fixes it, so a thread resolved by hand still shows as open in its overview.
+- Merge only once every CI job that ran is green and Copilot's latest overview lists no open findings. `ci.yml` runs only for changes to the Swift package, `.swift-format`, `ci.yml` or `scripts/ci-swift.sh`, so a PR that touches none of them has no CI to wait for. A finding that arrives after a merge goes in one follow-up PR that links the merged one.
 - Run `/swift-check` before pushing. `/work-issue <N>` does the whole loop for one issue; the `feature-worker` agent runs it in its own worktree so issues can proceed in parallel.
 - Linux first, macOS only when needed. macOS minutes on GitHub-hosted runners count 10x, so that job waits for the Linux job and skips draft PRs. The repository variable `CI_RUNNER=self-hosted` moves both jobs to the owner's Mac (`docs/self-hosted-runner.md`); fork PRs always stay on hosted runners.
 - Check CI with `/ci-status`. Use the `macos-ci-investigator` agent for a failing macOS job.
@@ -60,6 +65,10 @@ Follow `/port-from-reference` whenever code from them is copied or closely follo
 `claude --worktree <name>` creates `.claude/worktrees/<name>/` on branch `worktree-<name>`. `swift build` and `swift test` work inside it. `${CLAUDE_PROJECT_DIR}` in hooks deliberately stays at the main checkout.
 
 `worktree.baseRef` is `"head"` in `.claude/settings.json`, so worktrees branch from local HEAD and carry unpushed commits. That includes the commits of whatever feature branch HEAD is on, so switch to the branch you want first. Change it to `"fresh"` to branch from `origin/main` instead. There is no `.worktreeinclude`: no gitignored file is needed inside worktrees yet. Add one if that changes.
+
+## Permissions
+
+`.claude/settings.json` allows only the `swift build`, `swift test` and `swift format` commands. Read-only `git` commands such as `git status`, `git diff` and `git log` need no rule: Claude Code runs them without asking, and still asks for write-capable forms like `git diff --output=<file>`. Don't add `Bash(git <cmd> *)` allow rules, because they would approve those write-capable forms too.
 
 ## Secrets
 

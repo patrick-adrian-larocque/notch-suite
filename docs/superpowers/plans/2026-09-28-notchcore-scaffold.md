@@ -1,5 +1,7 @@
 # NotchCore Scaffold and Claude Workflow Readiness Implementation Plan
 
+> **Status:** Done, in PR #12. Review during that PR added tests beyond the ones written out in this plan, so the checkpoints from Task 3 on don't pin a test count: at merge the suite had 42 tests in 3 suites. For the current code and tests, read the repository, not this file.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give the repo a real, Linux-testable `NotchCore` Swift package (issue #3), harden the Claude Code settings (issue #4), and write `CLAUDE.md` plus path-scoped rules (issue #5), so CI, the skills and the agents from the dev workflow template have something real to run against.
@@ -757,7 +759,7 @@ swift build --build-tests 2>&1 | grep -Ei "warning|error|Build complete"
 swift test --skip-build 2>&1 | grep -Ei "✘|failed|Test run with"
 swift format lint --strict --recursive Sources Tests; echo "lint exit: $?"
 ```
-Expected: `Build complete!` with no warnings, no `✘` lines, `Test run with 34 tests in 3 suites passed`, `lint exit: 0`.
+Expected: `Build complete!` with no warnings, no `✘` lines, `Test run with <N> tests in 3 suites passed` (see the status note at the top for why there's no fixed count), `lint exit: 0`.
 
 - [ ] **Step 5: Commit**
 
@@ -796,7 +798,7 @@ SWIFT_IMAGE=swift:6.4-noble scripts/ci-swift.sh test --skip-build --scratch-path
 SWIFT_IMAGE=swift:6.4-noble scripts/ci-swift.sh format lint --strict --recursive Sources Tests; echo "lint exit: $?"
 rm -rf .build-linux
 ```
-Expected: `Build complete!`, `Test run with 34 tests in 3 suites passed`, `lint exit: 0`. (`.build-linux` keeps the Linux build separate from the macOS `.build`. It is deleted afterwards and is not ignored by git, so never commit it.)
+Expected: `Build complete!`, `Test run with <N> tests in 3 suites passed` (see the status note at the top for why there's no fixed count), `lint exit: 0`. (`.build-linux` keeps the Linux build separate from the macOS `.build`. It is deleted afterwards and is not ignored by git, so never commit it.)
 
 - [ ] **Step 4: Update the README status and build sections**
 
@@ -941,7 +943,7 @@ echo "--- allow rule ---"
 claude -p "Run: swift test --skip-build. Report only the last line of output." --max-turns 3 2>&1 | tail -3
 rm -f .env
 ```
-Expected: the first reply says the read was denied and does not contain `do-not-print`; the second prints the `Test run with 34 tests ... passed` line without asking for permission. Headless mode denies (rather than prompts for) anything not allowed, so a passing `swift test` shows the allow rule works. Confirm `.env` is gone: `ls .env` should fail.
+Expected: the first reply says the read was denied and does not contain `do-not-print`; the second prints the `Test run with <N> tests in 3 suites passed` line without asking for permission. Headless mode denies (rather than prompts for) anything not allowed, so a passing `swift test` shows the allow rule works. Confirm `.env` is gone: `ls .env` should fail.
 
 - [ ] **Step 7: Verify a worktree builds, tests, and stays out of `git status`**
 

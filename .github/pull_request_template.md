@@ -7,7 +7,7 @@ Closes #
 ## How it was tested
 
 - [ ] Linux: `swift build`, `swift test`, and `swift format lint --strict` (cloud session or CI)
-- [ ] macOS CI (runs once the PR is marked ready for review)
+- [ ] macOS CI, when the PR changes a path `ci.yml` watches (the self-hosted Mac runs it for drafts too; GitHub's runners only once the PR is ready for review)
 - [ ] On a real Mac (only needed for notch placement, live media, AirDrop, or permission prompts)
 
 ## Checklist
