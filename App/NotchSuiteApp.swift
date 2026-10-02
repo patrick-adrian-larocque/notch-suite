@@ -23,6 +23,11 @@ struct NotchSuiteApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panelController: NotchPanelController?
 
+    // TODO(#24): Own the real media source/presentation model from App/Media here.
+    // Start it once after launch and stop processes/observation on termination.
+    // Inject its state into the island shell after #23 / PR #44 lands.
+    // Keep startup failures visible separately from a valid "nothing playing" state.
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         let controller = NotchPanelController()
         controller.show()

@@ -21,6 +21,8 @@ targets:
     platform: macOS
     sources:
       - App
+    # TODO(#24): Package pinned mediaremote-adapter launcher/framework resources.
+    # See App/Media/MediaRemoteEngine.swift for paths, signing, and attribution work.
     dependencies:
       - package: NotchSuitePackage
         product: NotchCore
