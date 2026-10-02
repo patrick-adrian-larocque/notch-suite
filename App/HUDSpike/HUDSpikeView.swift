@@ -105,8 +105,9 @@
             Int((min(max(level, 0), 1) * Double(HUDSpikeView.segmentCount)).rounded())
         }
 
-        /// Volume that is muted or at zero: the icon and lit segments turn grey.
-        var isSilent: Bool { kind == .volume && (isMuted || litSegments == 0) }
+        /// Volume that is muted or at zero: the icon and lit segments turn grey. Uses the
+        /// real level, not the rounded segments, so a quiet volume isn't styled as muted.
+        var isSilent: Bool { kind == .volume && (isMuted || level <= 0) }
 
         var label: String {
             switch kind {

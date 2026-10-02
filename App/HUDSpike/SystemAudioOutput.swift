@@ -44,7 +44,12 @@
         func start() {
             var address = Self.defaultOutput
             let block: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
-                MainActor.assumeIsolated { self?.attachToDefaultDevice() }
+                MainActor.assumeIsolated {
+                    // A new output device: report its levels, so the HUD isn't left with
+                    // the old device's volume and mute.
+                    self?.attachToDefaultDevice()
+                    self?.changed(source: "defaultDevice")
+                }
             }
             let status = AudioObjectAddPropertyListenerBlock(
                 AudioObjectID(kAudioObjectSystemObject), &address, DispatchQueue.main, block)
