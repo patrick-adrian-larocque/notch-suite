@@ -19,7 +19,19 @@
       "Bash(swift test)",
       "Bash(swift test *)",
       "Bash(swift format)",
-      "Bash(swift format *)"
+      "Bash(swift format *)",
+      "Bash(xcodegen generate)",
+      "Bash(xcodebuild build -project NotchSuite.xcodeproj *)",
+      "mcp__xcode-tools__XcodeListSchemes",
+      "mcp__xcode-tools__XcodeRefreshCodeIssuesInFile",
+      "mcp__xcode-tools__XcodeRead",
+      "mcp__xcode-tools__XcodeGrep",
+      "mcp__xcode-tools__XcodeGlob",
+      "mcp__xcode-tools__XcodeLS",
+      "mcp__xcode-tools__GetBuildLog",
+      "mcp__xcode-tools__BuildProject",
+      "mcp__xcode-tools__RunAllTests",
+      "mcp__xcode-tools__RunSomeTests"
     ],
     "deny": [
       "Read(./.env)",

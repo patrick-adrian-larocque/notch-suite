@@ -1,8 +1,17 @@
 {
 	"mcpServers": {
-		"io.github.github/github-mcp-server": {
+		"xcode-tools": {
+			"type": "stdio",
+			"command": "xcrun",
+			"args": ["mcpbridge"]
+		},
+		"github": {
 			"type": "http",
-			"url": "https://api.githubcopilot.com/mcp/"
+			"url": "https://api.githubcopilot.com/mcp/",
+			"headers": {
+				"Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN:-}"
+			},
+			"headersHelper": "scripts/github-mcp-headers.sh"
 		},
 		"io.github.hashicorp/terraform-mcp-server": {
 			"type": "stdio",
