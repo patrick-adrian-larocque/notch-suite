@@ -50,6 +50,20 @@ extension IslandSettings.MotionCurve {
         case .smooth: .smooth
         }
     }
+
+    /// The spring an island morph with this curve uses at speed 1.
+    ///
+    /// These are tuned by eye to feel like the canvas's curve on a real Mac, not fitted
+    /// to its Bézier. The CSS curves overshoot more than a native spring needs to:
+    /// `bouncy` peaks about 10% past its target, while a 0.3 bounce settles with a few
+    /// percent, which reads as lively without wobbling. `smooth` doesn't overshoot at all.
+    public var baseSpring: MotionSpec.Spring {
+        switch self {
+        case .bouncy: MotionSpec.Spring(duration: 0.5, bounce: 0.3)
+        case .snappy: MotionSpec.Spring(duration: 0.34, bounce: 0.15)
+        case .smooth: MotionSpec.Spring(duration: 0.42, bounce: 0)
+        }
+    }
 }
 
 /// Every animation timing the island uses, worked out from the settings and
@@ -100,6 +114,23 @@ public struct MotionSpec: Sendable, Equatable {
         }
     }
 
+    /// A spring for a change of size or shape.
+    ///
+    /// The UI layer turns this into a platform spring, such as SwiftUI's
+    /// `Animation.spring(duration:bounce:)`.
+    public struct Spring: Sendable, Equatable {
+        /// How long the spring takes to look settled, in seconds. The tail of a bouncy
+        /// spring runs a little past it.
+        public var duration: Double
+        /// How much the spring overshoots: 0 for none, up to 1 for no damping at all.
+        public var bounce: Double
+
+        public init(duration: Double, bounce: Double) {
+            self.duration = duration
+            self.bounce = bounce
+        }
+    }
+
     // MARK: Design canvas values
 
     /// The reduce-motion fade's duration, in seconds. Not scaled by speed.
@@ -133,6 +164,11 @@ public struct MotionSpec: Sendable, Equatable {
     public let reducesMotion: Bool
     /// The island changing size between compact, peek and open.
     public let islandMorph: Transition
+    /// The spring the island changes size with, or `nil` under reduce motion, when the
+    /// island fades between sizes over ``islandMorph`` instead.
+    ///
+    /// Its duration is ``IslandSettings/MotionCurve/baseSpring`` divided by the speed.
+    public let islandSpring: Spring?
     /// The island's content appearing after a size change.
     public let contentReveal: Reveal
     /// The island changing size to show or hide a system HUD.
@@ -158,6 +194,7 @@ public struct MotionSpec: Sendable, Equatable {
 
         if reduces {
             islandMorph = Self.reducedTransition
+            islandSpring = nil
             contentReveal = Self.reducedReveal
             hudMorph = Self.reducedTransition
             hudReveal = Self.reducedReveal
@@ -168,6 +205,8 @@ public struct MotionSpec: Sendable, Equatable {
         let speed = settings.speed
         let curve = settings.motionCurve
         islandMorph = Transition(duration: curve.baseDuration / speed, curve: curve.timingCurve)
+        islandSpring = Spring(
+            duration: curve.baseSpring.duration / speed, bounce: curve.baseSpring.bounce)
         contentReveal = Self.baseContentReveal.scaled(by: speed)
         hudMorph = Transition(
             duration: Self.baseHUDMorph.duration / speed, curve: Self.baseHUDMorph.curve)
