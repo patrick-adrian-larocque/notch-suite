@@ -45,6 +45,26 @@ swift format lint --strict --recursive Sources Tests App
 - `.github/workflows/ci.yml`: the Linux and macOS jobs. `docs/self-hosted-runner.md` covers the Mac runner.
 - `THIRD_PARTY_LICENSES`: license texts for anything adapted from the reference projects.
 
+## Existing implementation sources
+
+Read README.md's "Credits / Inspiration and implementation sources" section
+before planning media, island interaction, or file-shelf work. The owner's forks
+are available sources to integrate and adapt, not merely inspiration. Do not
+characterize an unwired feature as lacking an available implementation.
+
+- `patrick-adrian-larocque/mediaremote-adapter`: intended media engine for the
+  macOS `NowPlayingSource`; use the existing parser, playback models, and commands
+  in `NotchCore` when connecting updates, artwork, and transport controls.
+- `patrick-adrian-larocque/boring.notch`: implementation patterns for notch panels,
+  hover/click expansion, and media UI integration.
+- `patrick-adrian-larocque/notchdrop`: implementation source for file drops, the
+  shelf, and dragging files out, adapted to `ShelfStore`/`ShelfStorage`.
+
+Inspect the relevant fork before designing replacements. Verify compatibility
+and packaging, adapt suitable code to this project's architecture, and follow
+`/port-from-reference` for attribution. Distinguish available source, code already
+in `NotchCore`, and services/UI actually connected in `App/` when reporting status.
+
 ## License rules
 
 The project is GPLv3. Code adapted from these projects keeps its original copyright notice and gets an entry in `THIRD_PARTY_LICENSES`:
@@ -53,7 +73,7 @@ The project is GPLv3. Code adapted from these projects keeps its original copyri
 - NotchDrop (MIT)
 - mediaremote-adapter (BSD-3-Clause)
 
-Follow `/port-from-reference` whenever code from them is copied or closely followed. The forks `patlar104/boring.notch`, `patlar104/notchdrop` and `patlar104/mediaremote-adapter` are for reading, never for pushing to. Run the `license-auditor` agent before merging a PR that ports code.
+Follow `/port-from-reference` whenever code from them is copied or closely followed. The forks `patrick-adrian-larocque/boring.notch`, `patrick-adrian-larocque/notchdrop` and `patrick-adrian-larocque/mediaremote-adapter` are for reading, never for pushing to. Run the `license-auditor` agent before merging a PR that ports code.
 
 ## Workflow
 

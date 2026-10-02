@@ -7,9 +7,9 @@ The reference repos are for reading. Never push to them.
 
 | Repo | License | Notes |
 |---|---|---|
-| `patlar104/boring.notch` | GPLv3 | Same license as this project |
-| `patlar104/notchdrop` | MIT | Keep the copyright and permission notice |
-| `patlar104/mediaremote-adapter` | BSD 3-Clause | Keep the copyright notice and conditions |
+| `patrick-adrian-larocque/boring.notch` | GPLv3 | Same license as this project |
+| `patrick-adrian-larocque/notchdrop` | MIT | Keep the copyright and permission notice |
+| `patrick-adrian-larocque/mediaremote-adapter` | BSD 3-Clause | Keep the copyright notice and conditions |
 
 ## Ideas vs. code
 
