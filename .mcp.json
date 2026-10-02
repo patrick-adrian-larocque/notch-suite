@@ -1,0 +1,46 @@
+{
+	"mcpServers": {
+		"io.github.github/github-mcp-server": {
+			"type": "http",
+			"url": "https://api.githubcopilot.com/mcp/"
+		},
+		"io.github.hashicorp/terraform-mcp-server": {
+			"type": "stdio",
+			"command": "docker",
+			"args": [
+				"run",
+				"-i",
+				"--rm",
+				"-e",
+				"TFE_ADDRESS=${input:address}",
+				"-e",
+				"TFE_TOKEN=${input:token}",
+				"-e",
+				"ENABLE_TF_OPERATIONS=${input:enabled}",
+				"docker.io/hashicorp/terraform-mcp-server:1.0.0"
+			]
+		}
+	},
+	"inputs": [
+		{
+			"id": "address",
+			"type": "promptString",
+			"description": "",
+			"password": false,
+			"default": "https://app.terraform.io"
+		},
+		{
+			"id": "token",
+			"type": "promptString",
+			"description": "",
+			"password": true
+		},
+		{
+			"id": "enabled",
+			"type": "promptString",
+			"description": "",
+			"password": false,
+			"default": "false"
+		}
+	]
+}
