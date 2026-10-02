@@ -5,6 +5,10 @@
     "editor.tabSize": 4,
     "editor.insertSpaces": true
   },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": true
+  },
   "swift.disableSwiftPackageManagerIntegration": false,
   "swift.ignoreSwiftVersionFile": false,
   "search.exclude": {
