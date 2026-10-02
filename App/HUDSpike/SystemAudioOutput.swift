@@ -14,7 +14,9 @@
     @MainActor
     final class SystemAudioOutput {
         /// Called on the main thread after volume or mute changed, with which listener fired.
-        var onChange: (_ volume: Double, _ isMuted: Bool, _ source: String) -> Void = { _, _, _ in }
+        /// `volume` is `nil` when the device has no volume control.
+        var onChange: (_ volume: Double?, _ isMuted: Bool, _ source: String) -> Void = { _, _, _ in
+        }
 
         private(set) var deviceID = AudioObjectID(kAudioObjectUnknown)
         private var deviceListeners:
@@ -115,9 +117,12 @@
             )
         }
 
+        /// Mute and volume are separate properties, so a mute change is reported even on a
+        /// device without a readable volume.
         private func changed(source: String) {
-            guard let volume else { return }
-            onChange(volume, isMuted ?? false, source)
+            let muted = isMuted
+            guard volume != nil || muted != nil else { return }
+            onChange(volume, muted ?? false, source)
         }
 
         private func read<Value: BitwiseCopyable>(_ address: AudioObjectPropertyAddress) -> Value? {

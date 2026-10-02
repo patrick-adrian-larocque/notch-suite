@@ -51,6 +51,8 @@
         /// Keys whose key-down suppress mode consumed, so their key-up is consumed too.
         private var consumedKeys: Set<MediaKey> = []
         private var lastAnnouncement = ""
+        private var announcedSinceKey = false
+        private var keyAnnouncement: Task<Void, Never>?
 
         override init() {
             model = HUDSpikeModel(machine: machine)
@@ -106,8 +108,8 @@
                 // shortly. CoreAudio reports volume itself; brightness would wait for the poll.
                 if event.isKeyDown {
                     lastKeyPress[kind] = .now
-                    // The level hasn't changed yet; the level observers announce it.
-                    show(kind, announce: false)
+                    announcedSinceKey = false
+                    showForKey(kind)
                     Task { [weak self] in
                         try? await Task.sleep(for: .milliseconds(80))
                         self?.display.check(source: "key+80ms")
@@ -120,6 +122,8 @@
             // half a press.
             guard event.isKeyDown else { return consumedKeys.remove(event.key) != nil }
             lastKeyPress[kind] = .now
+            // Reset before `apply`, which may already report and announce the new level.
+            announcedSinceKey = false
             // When the backend is missing or the write fails, let macOS handle the key.
             guard apply(event) else {
                 hudSpikeLog.notice("suppress: \(event, privacy: .public) not handled, passed on")
@@ -127,8 +131,7 @@
                 return false
             }
             consumedKeys.insert(event.key)
-            // The level observers announce the new value once it has landed.
-            show(kind, announce: false)
+            showForKey(kind)
             return true
         }
 
@@ -173,10 +176,11 @@
 
         // MARK: Levels
 
-        private func volumeChanged(_ volume: Double, muted: Bool, source: String) {
+        /// `volume` is `nil` on a device that has mute but no volume control.
+        private func volumeChanged(_ volume: Double?, muted: Bool, source: String) {
             hudSpikeLog.notice(
-                "level: volume \(volume) muted \(muted) via \(source, privacy: .public)")
-            model.volume = volume
+                "level: volume \(volume ?? -1) muted \(muted) via \(source, privacy: .public)")
+            if let volume { model.volume = volume }
             model.isMuted = muted
             show(.volume)
         }
@@ -218,9 +222,29 @@
             }
         }
 
+        /// Shows the HUD for a key press without announcing: the level hasn't landed yet,
+        /// and the level observers announce it when it does. A press that changes nothing
+        /// (already at 0 or 1) fires no observer, so after a short wait the current level
+        /// is announced anyway.
+        private func showForKey(_ kind: SystemHUDKind) {
+            show(kind, announce: false)
+            keyAnnouncement?.cancel()
+            keyAnnouncement = Task { [weak self] in
+                try? await Task.sleep(for: .milliseconds(250))
+                guard let self, !Task.isCancelled, !self.announcedSinceKey else { return }
+                self.announce(
+                    HUDSpikeState(kind: kind, model: self.model).accessibilityLabel, force: true)
+            }
+        }
+
         /// Stands in for `role="status"`: VoiceOver reads the new level without focus moving.
-        private func announce(_ text: String) {
-            guard NSWorkspace.shared.isVoiceOverEnabled, text != lastAnnouncement else { return }
+        /// Repeats of the last text are dropped unless `force` is set, because several
+        /// CoreAudio listeners report the same change.
+        private func announce(_ text: String, force: Bool = false) {
+            announcedSinceKey = true
+            guard NSWorkspace.shared.isVoiceOverEnabled, force || text != lastAnnouncement else {
+                return
+            }
             lastAnnouncement = text
             NSAccessibility.post(
                 element: NSApp as Any, notification: .announcementRequested,
@@ -235,12 +259,16 @@
             hostingView.sizingOptions = []
             panel.contentView = hostingView
             NotificationCenter.default.addObserver(
-                self, selector: #selector(placePanel),
+                self, selector: #selector(screenParametersDidChange(_:)),
                 name: NSApplication.didChangeScreenParametersNotification, object: nil)
             placePanel()
         }
 
-        @objc private func placePanel() {
+        @objc private func screenParametersDidChange(_ notification: Notification) {
+            placePanel()
+        }
+
+        private func placePanel() {
             guard let screen = provider.screen, let geometry = provider.geometry() else { return }
             let size = HUDSpikeView.size
             panel.setFrame(
