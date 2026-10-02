@@ -138,7 +138,8 @@
                 case .brightness: "Brightness"
                 case .keyboardBrightness: "Keyboard brightness"
                 }
-            if isSilent { return "\(name) muted" }
+            // Only real mute says "muted"; a quiet level still reads its percentage.
+            if isMuted { return "\(name) muted" }
             return "\(name) \(Int((level * 100).rounded())) percent"
         }
 

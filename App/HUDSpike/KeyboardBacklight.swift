@@ -41,8 +41,11 @@
             client = type?.init()
             // The built-in keyboard's ID comes from `copyKeyboardBacklightIDs`. On the M5 MacBook
             // Air it is 95158272, but 1 also works, which is what boring.notch hard-codes.
-            let ids =
-                (client?.perform(Self.idsSelector)?.takeRetainedValue() as? [NSNumber]) ?? []
+            // Check the selector first: `perform` on a selector the class dropped would crash.
+            var ids: [NSNumber] = []
+            if let client, client.responds(to: Self.idsSelector) {
+                ids = (client.perform(Self.idsSelector)?.takeRetainedValue() as? [NSNumber]) ?? []
+            }
             keyboardID = ids.first?.uint64Value ?? 1
             hudSpikeLog.notice(
                 "keyboard: CoreBrightness loaded \(loaded) client \(self.client != nil) ids \(ids.map(\.uint64Value), privacy: .public)"
