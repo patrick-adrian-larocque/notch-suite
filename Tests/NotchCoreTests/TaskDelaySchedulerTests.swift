@@ -52,8 +52,14 @@ import Testing
 
     @Test func cancelAfterTheDelayElapsedButBeforeTheActionRanStopsIt() async {
         var ran = false
-        let pending = scheduler.schedule(after: .zero) { ran = true }
-        // Block the main actor past the delay, so the task is ready to run but can't.
+        let pending = scheduler.schedule(after: .milliseconds(10)) { ran = true }
+        // Let the scheduled task run up to its sleep. It was queued on the main actor
+        // before this test's continuation, so a yield runs it first.
+        for _ in 0..<3 { await Task.yield() }
+        // Block the main actor past the delay: the sleep finishes and the task is ready
+        // to run the action, but can't until the main actor is free. A finished sleep no
+        // longer throws, so only the check after it stops the action. (A scheduler that
+        // relied on the sleep throwing fails this test and passes the one above.)
         blockTheMainActor(seconds: 0.05)
         pending.cancel()
         try? await Task.sleep(for: .milliseconds(50))

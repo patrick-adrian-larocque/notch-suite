@@ -15,8 +15,10 @@ public struct TaskDelayScheduler: DelayScheduler {
         // call, even for a zero delay.
         pending.task = Task { @MainActor in
             try? await Task.sleep(for: delay, clock: .continuous)
-            // The sleep can finish and queue this task before a `cancel()` that runs
-            // first on the main actor, so check the flag, not just task cancellation.
+            // Don't rely on the sleep throwing: it can finish and queue this task before
+            // a `cancel()` that gets the main actor first, and a finished sleep no longer
+            // throws. `cancel()` sets this flag on the main actor, so checking it here,
+            // also on the main actor, can't miss one.
             guard !pending.isCancelled else { return }
             pending.task = nil
             action()
