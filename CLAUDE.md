@@ -37,14 +37,6 @@ swift format lint --strict --recursive Sources Tests App
   Then open `NotchSuite.xcodeproj` and run the `NotchSuite` scheme, or open `build/DerivedData/Build/Products/Debug/NotchSuite.app`. It has no Dock icon; quit it from its status item. The project signs ad hoc ("Sign to Run Locally"); CI adds `CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` to build without signing.
 - `.swift-version` pins swiftly's toolchain for this folder and is gitignored. CI uses Xcode's Swift on macOS and the `swift:6.4-noble` image on Linux.
 
-## Key files
-
-- `Package.swift`: targets `NotchCore` and `NotchCoreTests` (macOS 14+, Swift tools 6.0).
-- `project.yml`: the XcodeGen spec for the `NotchSuite` app target (macOS 14+, Swift 6, `LSUIElement`), which depends on the package's `NotchCore` product. `App/`: its sources.
-- `.swift-format`: the formatter config that `swift format lint --strict` enforces.
-- `.github/workflows/ci.yml`: the Linux and macOS jobs. `docs/self-hosted-runner.md` covers the Mac runner.
-- `THIRD_PARTY_LICENSES`: license texts for anything adapted from the reference projects.
-
 ## Existing implementation sources
 
 Read README.md's "Credits / Inspiration and implementation sources" section
