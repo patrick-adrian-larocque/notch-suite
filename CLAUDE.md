@@ -26,7 +26,7 @@ swift format lint --strict --recursive Sources Tests App
 - `swift test --skip-build` only runs what `swift build --build-tests` already built, so run them in that order. On its own it reports failures.
 - To fix formatting: `swift format format --in-place --recursive Sources Tests App`.
 - On a Mac these run natively. In Claude Code cloud sessions `swift` is a wrapper that runs Linux Swift in Docker (`.claude/hooks/session-start.sh`).
-- To run the Linux side of CI from a Mac, use `SWIFT_IMAGE=swift:6.4-noble scripts/ci-swift.sh test` for the build and tests, and `SWIFT_IMAGE=swift:6.4-noble scripts/ci-swift.sh format lint --strict --recursive Sources Tests App` for the lint. It needs Docker running (OrbStack on the owner's Mac) and shares `.build` with the macOS build, which works.
+- To run the Linux side of CI from a Mac, use `/linux-check`, or run `scripts/ci-swift.sh test` for the build and tests and `scripts/ci-swift.sh format lint --strict --recursive Sources Tests App` for the lint. `SWIFT_IMAGE` defaults to the image `ci.yml` pins, so no environment prefix is needed. It needs Docker (OrbStack on the owner's Mac); the script starts OrbStack if it isn't running. It shares `.build` with the macOS build, which works. Set `SWIFT_PLATFORM=linux/amd64` to match GitHub's x86_64 runners (slower).
 - The macOS app needs a Mac with Xcode and XcodeGen (`brew install xcodegen`). Generate the Xcode project first; it is gitignored, so regenerate it after pulling a change to `project.yml` or adding or removing a file in `App/`:
 
   ```sh

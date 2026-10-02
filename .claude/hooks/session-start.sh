@@ -4,6 +4,15 @@
 set -euo pipefail
 
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
+  # On a Mac, tell the session whether OrbStack (the Linux CI side) is available.
+  if [ "$(uname)" = "Darwin" ] && command -v orbctl >/dev/null 2>&1; then
+    orb_status=$(orbctl status 2>/dev/null || true)
+    if [ "$orb_status" = "Running" ]; then
+      echo "OrbStack is running: /linux-check (scripts/ci-swift.sh) runs the Linux CI side."
+    else
+      echo "OrbStack is installed but not running: scripts/ci-swift.sh starts it on demand."
+    fi
+  fi
   exit 0
 fi
 
