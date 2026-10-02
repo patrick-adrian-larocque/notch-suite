@@ -20,7 +20,8 @@ package. The macOS app still needs a Mac for compilation and runtime validation.
    The checkout used during setup must contain `script/setup-cloud.sh`. When
    testing this change before it is merged, use the `codex/cloud-setup` branch.
 3. Ask the setup conversation to prepare Ubuntu 24.04 with native Swift 6.4.0,
-   Swift Format, LLDB, and ripgrep using this install command from the repo root:
+   Swift Format, LLDB, and the troubleshooting tools below using this install
+   command from the repo root:
 
    ```sh
    ./script/setup-cloud.sh
@@ -45,9 +46,38 @@ Docker is unnecessary inside Cloud; the existing Docker scripts remain available
 for Claude sessions, CI, and reproducing Linux checks from a Mac.
 
 If Cloud supplies another distribution, ask setup to install the matching native
-Swift 6.4.0 toolchain and LLDB first. The script reuses a working matching
-toolchain but deliberately stops rather than installing Ubuntu binaries on an
+Swift 6.4.0 toolchain, LLDB, and the tools below first. The script reuses a working
+matching toolchain but deliberately stops rather than installing Ubuntu binaries on an
 unsupported distribution.
+
+The installer also ensures these tools are available when Swift is already
+installed. Ubuntu's `fdfind` and `batcat` executables get `fd` and `bat` links
+in `/usr/local/bin`, which work in later shells without personal aliases.
+
+| Tool | Use |
+| --- | --- |
+| `rg` | Search source code and logs. |
+| `fd` | Find files by name, extension, or path. |
+| `bat` | Read source with syntax highlighting and line numbers. |
+| `fzf` | Filter file lists and other output. |
+| `eza` | Inspect directory listings and trees. |
+| `jq` | Inspect JSON configuration, fixtures, and command output. |
+| `shellcheck` | Diagnose shell-script errors. |
+
+Use noninteractive forms in agent tasks, for example:
+
+```sh
+fd -e swift | fzf --filter 'StateMachine'
+bat --paging=never Sources/NotchCore/MotionSpec.swift
+eza --tree --level=2 Sources Tests
+swift package dump-package | jq '.targets[].name'
+shellcheck script/setup-cloud.sh
+```
+
+These Ubuntu packages require the `universe` repository, enabled in the standard
+Ubuntu 24.04 image. No extra download hosts are needed beyond the Ubuntu package
+repositories already allowed during setup. After adding these tools to an
+existing Cloud environment, rerun setup and republish so new tasks inherit them.
 
 The desktop `.codex/environments/environment.toml` is a local worktree/action
 configuration. Committing it does not create or publish a Cloud environment.
