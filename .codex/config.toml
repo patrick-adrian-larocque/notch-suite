@@ -1,0 +1,2 @@
+# Shared repository discovery; model, credentials, and permissions stay user-managed.
+project_root_markers = [".git", "Package.swift"]

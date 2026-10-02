@@ -1,7 +1,9 @@
 {
   "[swift]": {
     "editor.defaultFormatter": "swiftlang.swift-vscode",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
   },
   "swift.disableSwiftPackageManagerIntegration": false,
   "swift.ignoreSwiftVersionFile": false,
@@ -14,5 +16,14 @@
     "**/.build/**",
     "**/build/**",
     "**/.claude/worktrees/**"
-  ]
+  ],
+  "files.watcherExclude": {
+    "**/.build/**": true,
+    "**/build/**": true,
+    "**/.claude/worktrees/**": true
+  },
+  "files.exclude": {
+    "**/.build": true,
+    "**/build": true
+  }
 }

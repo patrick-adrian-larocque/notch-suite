@@ -108,12 +108,74 @@
     },
     {
       "label": "Swift: Verify",
-      "dependsOrder": "sequence",
-      "dependsOn": [
-        "Swift: Build core and tests",
-        "Swift: Test core",
-        "Swift: Lint"
+      "type": "process",
+      "command": "${workspaceFolder}/script/verify.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$swiftc",
+        {
+          "owner": "swift-format",
+          "fileLocation": [
+            "relative",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+): (warning|error): (.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        }
+      ]
+    },
+    {
+      "label": "Workspace: Setup",
+      "type": "process",
+      "command": "${workspaceFolder}/script/setup.sh",
+      "args": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "App: Build Release",
+      "type": "process",
+      "command": "${workspaceFolder}/script/build_and_run.sh",
+      "args": [
+        "--release-build"
       ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$swiftc"
+    },
+    {
+      "label": "App: Build and stream logs",
+      "type": "process",
+      "command": "${workspaceFolder}/script/build_and_run.sh",
+      "args": [
+        "--logs"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "App: Build and stream telemetry",
+      "type": "process",
+      "command": "${workspaceFolder}/script/build_and_run.sh",
+      "args": [
+        "--telemetry"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "problemMatcher": []
     }
   ]

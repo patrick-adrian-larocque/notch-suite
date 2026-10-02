@@ -11,3 +11,10 @@
 - Before planning media controls, hover/click expansion, or file drops, read the implementation sources and integration plan in [README.md](README.md) and [CLAUDE.md](CLAUDE.md).
 - The owner's forks of mediaremote-adapter, boring.notch, and notchdrop are available to integrate and adapt. Inspect the relevant implementation before proposing a replacement; preserve the project's core/app boundary and required attribution.
 - Report the distinction between available implementation sources and features already connected in the app. An unwired placeholder does not imply that the underlying implementation is unavailable.
+
+## Workspace commands
+
+- Read `docs/workspace.md` for editor, Codex, and worktree setup.
+- Run `./script/setup.sh` to resolve the core package and generate the macOS project.
+- Run `./script/verify.sh` before pushing; app changes also require `./script/build_and_run.sh --build-only`.
+- Use `./script/build_and_run.sh --verify` to build, launch, and check the app process.

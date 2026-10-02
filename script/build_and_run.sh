@@ -3,18 +3,20 @@ set -euo pipefail
 
 mode="${1:-run}"
 case "$mode" in
-  run|--build-only|--verify|--debug|--logs|--telemetry) ;;
-  *) echo "Usage: $0 [--build-only|--verify|--debug|--logs|--telemetry]" >&2; exit 2 ;;
+  run|--build-only|--release-build|--verify|--debug|--logs|--telemetry) ;;
+  *) echo "Usage: $0 [--build-only|--release-build|--verify|--debug|--logs|--telemetry]" >&2; exit 2 ;;
 esac
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root_dir"
 command -v xcodegen >/dev/null || { echo "Install XcodeGen with: brew install xcodegen" >&2; exit 1; }
+configuration=Debug
+[[ "$mode" == --release-build ]] && configuration=Release
 xcodegen generate
 xcodebuild build -project NotchSuite.xcodeproj -scheme NotchSuite \
-  -configuration Debug -destination 'platform=macOS' -derivedDataPath build/DerivedData
+  -configuration "$configuration" -destination 'platform=macOS' -derivedDataPath build/DerivedData
 app_bundle="$root_dir/build/DerivedData/Build/Products/Debug/NotchSuite.app"
 app_binary="$app_bundle/Contents/MacOS/NotchSuite"
-[[ "$mode" == --build-only ]] && exit 0
+[[ "$mode" == --build-only || "$mode" == --release-build ]] && exit 0
 # Stop only this checkout's app, leaving instances from other worktrees alone.
 while read -r process_id executable; do
   if [[ "$executable" == "$app_binary" ]]; then

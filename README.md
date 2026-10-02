@@ -83,7 +83,7 @@ Use **Tasks: Run Task** for `Swift: Verify` (build, tests, strict lint), individ
 core checks, `Swift: Format all` (rewrites files), or `App: Build and run`.
 Lint findings appear in Problems when the lint task runs; linting is not automatic
 on save. `App/` is an Xcode target, so the core SwiftPM integration alone does not
-provide its Xcode build settings or a ready-to-use app debugger configuration.
+provide its Xcode build settings or Xcode-aware completion. Use the shared attach configuration for app debugging.
 
 `./script/build_and_run.sh` generates the Xcode project, builds, and relaunches
 this checkout's app. It requires macOS, Xcode, and XcodeGen. Options include
@@ -91,3 +91,6 @@ this checkout's app. It requires macOS, Xcode, and XcodeGen. Options include
 `.codex/environments/environment.toml` provides Run and Verify actions for the
 Codex app. Existing GitHub workflows remain in `.github/workflows/`; worktrees
 are separate checkouts managed by Git, not editor configuration files.
+
+See [the complete workspace guide](docs/workspace.md) for setup, debugging,
+Release builds, log tasks, Codex worktrees, and configuration boundaries.
