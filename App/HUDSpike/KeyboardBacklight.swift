@@ -68,12 +68,14 @@
             return get(client, Self.autoSelector, keyboardID)
         }
 
-        func setLevel(_ value: Double) {
+        /// Returns whether CoreBrightness accepted the new level.
+        func setLevel(_ value: Double) -> Bool {
             guard let client, let set = implementation(Self.setSelector, as: SetLevel.self) else {
-                return
+                return false
             }
             let ok = set(client, Self.setSelector, Float(min(max(value, 0), 1)), keyboardID)
             hudSpikeLog.notice("keyboard: set \(value) ok \(ok)")
+            return ok
         }
 
         func start() {

@@ -65,9 +65,11 @@
             return Double(value)
         }
 
-        func setBrightness(_ value: Double) {
+        /// Returns whether DisplayServices accepted the new brightness.
+        func setBrightness(_ value: Double) -> Bool {
             let status = setBrightness?(displayID, Float(min(max(value, 0), 1)))
             hudSpikeLog.notice("brightness: set \(value) status \(String(describing: status))")
+            return status == 0
         }
 
         func start() {

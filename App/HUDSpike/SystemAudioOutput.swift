@@ -62,13 +62,15 @@
             (read(Self.mute) as UInt32?).map { $0 != 0 }
         }
 
-        func setVolume(_ volume: Double) {
+        /// Returns whether the device took the new volume.
+        func setVolume(_ volume: Double) -> Bool {
             let value = Float32(min(max(volume, 0), 1))
-            if !write(Self.virtualMainVolume, value) { _ = write(Self.scalarVolume, value) }
+            return write(Self.virtualMainVolume, value) || write(Self.scalarVolume, value)
         }
 
-        func setMuted(_ muted: Bool) {
-            _ = write(Self.mute, UInt32(muted ? 1 : 0))
+        /// Returns whether the device took the new mute state.
+        func setMuted(_ muted: Bool) -> Bool {
+            write(Self.mute, UInt32(muted ? 1 : 0))
         }
 
         private func attachToDefaultDevice() {

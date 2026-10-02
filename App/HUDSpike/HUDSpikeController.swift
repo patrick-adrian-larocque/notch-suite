@@ -48,6 +48,8 @@
         private var globalMonitor: Any?
         private var lastKeyPress: [SystemHUDKind: ContinuousClock.Instant] = [:]
         private var lastBacklightLevel = 0.5
+        /// Keys whose key-down suppress mode consumed, so their key-up is consumed too.
+        private var consumedKeys: Set<MediaKey> = []
         private var lastAnnouncement = ""
 
         override init() {
@@ -104,7 +106,8 @@
                 // shortly. CoreAudio reports volume itself; brightness would wait for the poll.
                 if event.isKeyDown {
                     lastKeyPress[kind] = .now
-                    show(kind)
+                    // The level hasn't changed yet; the level observers announce it.
+                    show(kind, announce: false)
                     Task { [weak self] in
                         try? await Task.sleep(for: .milliseconds(80))
                         self?.display.check(source: "key+80ms")
@@ -113,42 +116,55 @@
                 }
                 return false
             }
-            // Consume key-ups too, so the system never sees half a press.
-            guard event.isKeyDown else { return true }
+            // A key-up is consumed only when its key-down was, so the system never sees
+            // half a press.
+            guard event.isKeyDown else { return consumedKeys.remove(event.key) != nil }
             lastKeyPress[kind] = .now
-            apply(event)
-            show(kind)
+            // When the backend is missing or the write fails, let macOS handle the key.
+            guard apply(event) else {
+                hudSpikeLog.notice("suppress: \(event, privacy: .public) not handled, passed on")
+                consumedKeys.remove(event.key)
+                return false
+            }
+            consumedKeys.insert(event.key)
+            // The level observers announce the new value once it has landed.
+            show(kind, announce: false)
             return true
         }
 
         /// Changes the level the way the system would, in 1/16 steps, or 1/64 with
-        /// Option-Shift.
-        private func apply(_ event: MediaKeyEvent) {
+        /// Option-Shift. Returns whether the level could be read and written.
+        private func apply(_ event: MediaKeyEvent) -> Bool {
             let step = event.isFineStep ? 1.0 / 64 : 1.0 / 16
             func stepped(_ value: Double, _ direction: Double) -> Double {
                 min(max(((value / step).rounded() + direction) * step, 0), 1)
             }
             switch event.key {
-            case .soundUp:
-                if audio.isMuted == true { audio.setMuted(false) }
-                audio.setVolume(stepped(audio.volume ?? 0, 1))
-            case .soundDown:
-                audio.setVolume(stepped(audio.volume ?? 0, -1))
+            case .soundUp, .soundDown:
+                guard let volume = audio.volume else { return false }
+                if event.key == .soundUp, audio.isMuted == true { _ = audio.setMuted(false) }
+                return audio.setVolume(stepped(volume, event.key == .soundUp ? 1 : -1))
             case .mute:
-                audio.setMuted(!(audio.isMuted ?? false))
+                guard let muted = audio.isMuted else { return false }
+                return audio.setMuted(!muted)
             case .brightnessUp, .brightnessDown:
+                guard let brightness = display.brightness else { return false }
                 let direction = event.key == .brightnessUp ? 1.0 : -1.0
-                display.setBrightness(stepped(display.brightness ?? 0, direction))
+                guard display.setBrightness(stepped(brightness, direction)) else { return false }
                 display.check(source: "key")
+                return true
             case .illuminationUp, .illuminationDown:
+                guard let level = keyboard.level else { return false }
                 let direction = event.key == .illuminationUp ? 1.0 : -1.0
-                keyboard.setLevel(stepped(keyboard.level ?? 0, direction))
+                guard keyboard.setLevel(stepped(level, direction)) else { return false }
                 keyboard.check()
+                return true
             case .illuminationToggle:
-                let level = keyboard.level ?? 0
+                guard let level = keyboard.level else { return false }
                 if level > 0 { lastBacklightLevel = level }
-                keyboard.setLevel(level > 0 ? 0 : lastBacklightLevel)
+                guard keyboard.setLevel(level > 0 ? 0 : lastBacklightLevel) else { return false }
                 keyboard.check()
+                return true
             }
         }
 
@@ -189,10 +205,14 @@
 
         // MARK: HUD
 
-        private func show(_ kind: SystemHUDKind) {
+        /// Shows the HUD. Only callers that already hold the new level announce it, so
+        /// VoiceOver never reads a stale value first.
+        private func show(_ kind: SystemHUDKind, announce shouldAnnounce: Bool = true) {
             machine.hudKeyPressed(kind)
             panel.orderFrontRegardless()
-            announce(HUDSpikeState(kind: kind, model: model).accessibilityLabel)
+            if shouldAnnounce {
+                announce(HUDSpikeState(kind: kind, model: model).accessibilityLabel)
+            }
         }
 
         /// Stands in for `role="status"`: VoiceOver reads the new level without focus moving.
