@@ -29,7 +29,10 @@ Package.resolved
 .DS_Store
 
 # Editor
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
 .idea/
 *.swp
 

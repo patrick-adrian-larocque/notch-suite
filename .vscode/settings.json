@@ -1,0 +1,18 @@
+{
+  "[swift]": {
+    "editor.defaultFormatter": "swiftlang.swift-vscode",
+    "editor.formatOnSave": true
+  },
+  "swift.disableSwiftPackageManagerIntegration": false,
+  "swift.ignoreSwiftVersionFile": false,
+  "search.exclude": {
+    "**/.build": true,
+    "**/build": true,
+    "**/.claude/worktrees": true
+  },
+  "todo-tree.filtering.excludeGlobs": [
+    "**/.build/**",
+    "**/build/**",
+    "**/.claude/worktrees/**"
+  ]
+}

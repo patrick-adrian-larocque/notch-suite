@@ -1,0 +1,120 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Swift: Build core and tests",
+      "type": "process",
+      "command": "swift",
+      "args": [
+        "build",
+        "--build-tests"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$swiftc",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Swift: Test core",
+      "type": "process",
+      "command": "swift",
+      "args": [
+        "test",
+        "--skip-build"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$swiftc",
+      "dependsOn": "Swift: Build core and tests"
+    },
+    {
+      "label": "Swift: Lint",
+      "type": "process",
+      "command": "swift",
+      "args": [
+        "format",
+        "lint",
+        "--strict",
+        "--recursive",
+        "Sources",
+        "Tests",
+        "App"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "owner": "swift-format",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+): (warning|error): (.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    },
+    {
+      "label": "Swift: Format all",
+      "type": "process",
+      "command": "swift",
+      "args": [
+        "format",
+        "format",
+        "--in-place",
+        "--recursive",
+        "Sources",
+        "Tests",
+        "App"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "App: Build",
+      "type": "process",
+      "command": "${workspaceFolder}/script/build_and_run.sh",
+      "args": [
+        "--build-only"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$swiftc"
+    },
+    {
+      "label": "App: Build and run",
+      "type": "process",
+      "command": "${workspaceFolder}/script/build_and_run.sh",
+      "args": [
+        "--verify"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$swiftc"
+    },
+    {
+      "label": "Swift: Verify",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Swift: Build core and tests",
+        "Swift: Test core",
+        "Swift: Lint"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

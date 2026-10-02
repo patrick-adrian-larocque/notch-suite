@@ -70,3 +70,24 @@ The app's Xcode project is generated from `project.yml` with
 
     xcodegen generate
     open NotchSuite.xcodeproj
+
+## VS Code and Codex workspace
+
+Open this repository root in VS Code. `.vscode/settings.json` enables Swift
+formatting on save using the Swift extension and the root `.swift-format`.
+Swiftly selects the local `.swift-version` when present. Install recommended
+extensions from the Extensions panel; machine-specific executable paths belong
+in user settings, including Todo Tree's ripgrep path.
+
+Use **Tasks: Run Task** for `Swift: Verify` (build, tests, strict lint), individual
+core checks, `Swift: Format all` (rewrites files), or `App: Build and run`.
+Lint findings appear in Problems when the lint task runs; linting is not automatic
+on save. `App/` is an Xcode target, so the core SwiftPM integration alone does not
+provide its Xcode build settings or a ready-to-use app debugger configuration.
+
+`./script/build_and_run.sh` generates the Xcode project, builds, and relaunches
+this checkout's app. It requires macOS, Xcode, and XcodeGen. Options include
+`--build-only`, `--verify`, `--debug`, `--logs`, and `--telemetry`.
+`.codex/environments/environment.toml` provides Run and Verify actions for the
+Codex app. Existing GitHub workflows remain in `.github/workflows/`; worktrees
+are separate checkouts managed by Git, not editor configuration files.

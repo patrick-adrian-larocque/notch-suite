@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "swiftlang.swift-vscode",
+    "gruntfuggly.todo-tree",
+    "openai.chatgpt",
+    "davidanson.vscode-markdownlint"
+  ]
+}
