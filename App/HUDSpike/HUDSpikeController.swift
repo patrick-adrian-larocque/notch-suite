@@ -241,10 +241,12 @@
         /// Repeats of the last text are dropped unless `force` is set, because several
         /// CoreAudio listeners report the same change.
         private func announce(_ text: String, force: Bool = false) {
-            announcedSinceKey = true
             guard NSWorkspace.shared.isVoiceOverEnabled, force || text != lastAnnouncement else {
                 return
             }
+            // Only a posted announcement counts, so a filtered repeat can't cancel the
+            // key-press fallback.
+            announcedSinceKey = true
             lastAnnouncement = text
             NSAccessibility.post(
                 element: NSApp as Any, notification: .announcementRequested,
