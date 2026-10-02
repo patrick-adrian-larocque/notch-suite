@@ -40,6 +40,7 @@ Package.resolved
 # Claude Code: personal settings, personal instructions, and worktree checkouts
 .claude/settings.local.json
 CLAUDE.local.md
+.claude/*.local.md
 .claude/worktrees/
 
 # XcodeGen output; regenerate with `xcodegen generate` (project.yml is the source)

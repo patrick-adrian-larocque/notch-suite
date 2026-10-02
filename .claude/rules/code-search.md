@@ -1,10 +1,11 @@
 # Finding and reading code
 
 ## Defaults
-These are built in and always available:
-- **Find files by name or path pattern:** the Glob tool.
-- **Search text or regex:** the Grep tool (it is ripgrep).
+These are always available:
+- **Find files by name or path pattern:** the Glob tool. Some Claude Code builds don't offer it; there, `find` in Bash is the replacement (the shell snapshot maps it to the embedded `bfs`). Check `ToolSearch` before assuming it's missing.
+- **Search text or regex:** the Grep tool (it is ripgrep), or `rg`/`grep` in Bash when the tool isn't offered (`grep` maps to the embedded `ugrep`, which has no lookahead).
 - **Read a file:** the Read tool, with `offset`/`limit` for large files.
+- In zsh, an unmatched glob like `*/*.jsonl` aborts the command; use `find` instead.
 
 ## Extra tools, for jobs the defaults can't do
 In cloud sessions the SessionStart hook installs these. Its startup line says which ones are available.

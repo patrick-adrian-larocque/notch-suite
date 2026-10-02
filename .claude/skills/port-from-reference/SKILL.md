@@ -23,7 +23,7 @@ If you only follow an approach and write your own implementation, mention the in
 3. Make sure `THIRD_PARTY_LICENSES` has an entry for that project with its full license text. Add one if it's missing.
 4. Fit the code to this project's layering:
    - Logic goes in `NotchCore`, with no AppKit, SwiftUI, or Combine.
-   - Views go in the UI layer.
+   - Views go in the app target (`App/`) until `NotchUI` exists. A SwiftUI target in `Package.swift` would break `swift build` on Linux.
    - System integration goes in the app target, behind a protocol defined in `NotchCore`.
 5. Add tests for the ported logic. Core tests run on Linux.
 6. In the PR description, list what was ported, from which file, and at which commit of the reference repo.

@@ -11,7 +11,7 @@ Implement GitHub issue #$issue in this repository.
 1. **Read the issue and its comments.**
    - If a "Depends on" issue is still open, stop and report that instead of working around it.
    - If the acceptance criteria are missing or ambiguous, ask instead of guessing.
-2. **Look for existing work first.** Search open PRs whose description closes #$issue (`Closes`, `Fixes` or `Resolves #$issue`), and remote branches named `claude/issue-$issue-*`. A PR that only mentions the issue, for example as a dependency or a follow-up, isn't this issue's PR. `git branch -r` only shows refs already fetched, so first run `git fetch origin --prune` to refresh them. To list the branches, run `git branch -r --list 'origin/claude/issue-$issue-*'`, with the issue number substituted before you run it: for issue 7, that is `git branch -r --list 'origin/claude/issue-7-*'`. Never paste `$issue` literally. For each one, strip the `origin/` prefix and run `gh pr list --head "<bare-name>" --state all --json state,number`. Never pass the `origin/` prefix: `gh pr list --head origin/<name>` returns `[]`. Read the result like this, and an open PR always wins:
+2. **Look for existing work first.** Search open PRs whose description closes #$issue (`Closes`, `Fixes` or `Resolves #$issue`), and remote branches named `claude/issue-$issue-*`. A PR that only mentions the issue, for example as a dependency or a follow-up, isn't this issue's PR. `git branch -r` only shows refs already fetched, so first run `git fetch origin --prune` to refresh them. To list the branches, run `git branch -r --list 'origin/claude/issue-$issue-*'`, with the issue number substituted before you run it: for issue 7, that is `git branch -r --list 'origin/claude/issue-7-*'`. Always substitute the real issue number into the command; never run it with a placeholder. For each one, strip the `origin/` prefix and run `gh pr list --head "<bare-name>" --state all --json state,number`. Never pass the `origin/` prefix: `gh pr list --head origin/<name>` returns `[]`. Read the result like this, and an open PR always wins:
    - Any `OPEN` PR: the branch is in progress. Continue it, even if it also has a merged PR from earlier work.
    - Only `MERGED` or `CLOSED` PRs: the branch is finished. Ignore it.
    - No PR at all: an interrupted run (see below).
@@ -29,7 +29,7 @@ Implement GitHub issue #$issue in this repository.
    - Follow `CLAUDE.md`.
    - Keep `NotchCore` free of AppKit, SwiftUI, and Combine.
    - If you adapt code from boring.notch, NotchDrop, or mediaremote-adapter, follow /port-from-reference.
-6. **Verify** with /swift-check and fix every failure before continuing.
+6. **Verify** with /swift-check and fix every failure before continuing. If the change touches `App/` or `project.yml` and you are on a Mac, also run /macos-build.
 7. **Commit and push.** Keep commits focused, with messages that explain why.
 8. **Open or update the PR.**
    - With no PR yet, open a draft that follows `.github/pull_request_template.md`. It says `Closes #$issue` and has a test plan listing only what you actually ran, plus anything that still needs a real Mac.

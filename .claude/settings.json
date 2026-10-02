@@ -10,6 +10,37 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | { read -r f; case \"$f\" in */NotchSuite.xcodeproj/*|*/Package.resolved) printf '%s\\n' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Generated, gitignored file. Change project.yml or Package.swift and regenerate instead.\"}}';; esac; }"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '[.tool_name, (.tool_response.type // \"\"), (.tool_input.file_path // \"\")] | join(\"|\")' | { IFS='|' read -r t ty f; m=; case \"$f\" in */project.yml) m=1;; */App/*.swift) [ \"$t\" = Write ] && [ \"$ty\" = create ] && m=1;; esac; [ -n \"$m\" ] && printf '%s\\n' '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"project.yml or the App/ file set changed: run xcodegen generate before building the Xcode project.\"}}'; true; }"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in *.swift) swift format format --in-place \"$f\";; esac; } 2>/dev/null || true"
+          }
+        ]
+      }
     ]
   },
   "permissions": {
@@ -20,7 +51,7 @@
       "Bash(swift test *)",
       "Bash(swift format)",
       "Bash(swift format *)",
-      "Bash(xcodegen generate)",
+      "Bash(xcodegen *)",
       "Bash(xcodebuild build -project NotchSuite.xcodeproj *)",
       "mcp__xcode-tools__XcodeListSchemes",
       "mcp__xcode-tools__XcodeRefreshCodeIssuesInFile",
@@ -31,7 +62,14 @@
       "mcp__xcode-tools__GetBuildLog",
       "mcp__xcode-tools__BuildProject",
       "mcp__xcode-tools__RunAllTests",
-      "mcp__xcode-tools__RunSomeTests"
+      "mcp__xcode-tools__RunSomeTests",
+      "mcp__xcode-tools__XcodeListTargets",
+      "mcp__xcode-tools__XcodeListWorkspaces",
+      "mcp__xcode-tools__GetTestList",
+      "mcp__xcode-tools__GetTargetBuildSettings",
+      "mcp__xcode-tools__GetConsoleOutput",
+      "mcp__xcode-tools__DocumentationSearch",
+      "mcp__xcode-tools__RenderPreview"
     ],
     "deny": [
       "Read(./.env)",
