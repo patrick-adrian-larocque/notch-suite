@@ -27,5 +27,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let controller = NotchPanelController()
         controller.show()
         panelController = controller
+        #if DEBUG
+            HUDSpikeController.startIfEnabled()  // #26 spike; off unless `-HUDSpike YES`
+        #endif
     }
 }
