@@ -142,7 +142,10 @@
             switch event.key {
             case .soundUp, .soundDown:
                 guard let volume = audio.volume else { return false }
-                if event.key == .soundUp, audio.isMuted == true { _ = audio.setMuted(false) }
+                // Volume up unmutes; if that fails, the key is unhandled and goes to macOS.
+                if event.key == .soundUp, audio.isMuted == true, !audio.setMuted(false) {
+                    return false
+                }
                 return audio.setVolume(stepped(volume, event.key == .soundUp ? 1 : -1))
             case .mute:
                 guard let muted = audio.isMuted else { return false }
