@@ -12,6 +12,7 @@
 | `.codex/environments/environment.toml` | Worktree setup and Run/Verify/Build/Lint actions. |
 | `AGENTS.md` / `CLAUDE.md` | Repository workflow, implementation sources, architecture and verification requirements. |
 | `script/setup.sh` | Resolve the package; on macOS check Xcode/XcodeGen and generate the app project. |
+| `script/setup-cloud.sh` | Install native Swift 6.4 and LLDB on Ubuntu 24.04 for Codex Cloud, then resolve the package. |
 | `script/verify.sh` | Required core build, tests and strict format lint, stopping on failure. |
 | `script/build_and_run.sh` | Build and launch the app, Release build, debugger and log modes. |
 | `.github/workflows/` | Existing CI and GitHub automation. |
@@ -61,6 +62,10 @@ Do not commit checkout contents. Keep machine-specific tool paths in VS Code use
 settings (for example `todo-tree.ripgrep.ripgrep`).
 
 ## Validation limits
+
+For Codex Cloud environment setup and Linux debugging, see [the Cloud guide](cloud.md).
+The local `.codex/environments/environment.toml` configures desktop worktrees
+and actions; Cloud installation is configured in the Cloud environment itself.
 
 JSON/TOML and scripts can be checked from the shell. VS Code task rendering,
 format-on-save, debugger attachment, and Codex action/worktree UI behavior need

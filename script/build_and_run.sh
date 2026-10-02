@@ -6,6 +6,10 @@ case "$mode" in
   run|--build-only|--release-build|--verify|--debug|--logs|--telemetry) ;;
   *) echo "Usage: $0 [--build-only|--release-build|--verify|--debug|--logs|--telemetry]" >&2; exit 2 ;;
 esac
+if [[ "$(uname -s)" != Darwin ]]; then
+  echo "The app requires macOS, Xcode, and XcodeGen. On Linux/Cloud run ./script/verify.sh for core tests and source lint; validate the app on a Mac or macOS CI." >&2
+  exit 1
+fi
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root_dir"
 command -v xcodegen >/dev/null || { echo "Install XcodeGen with: brew install xcodegen" >&2; exit 1; }

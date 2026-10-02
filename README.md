@@ -94,3 +94,14 @@ are separate checkouts managed by Git, not editor configuration files.
 
 See [the complete workspace guide](docs/workspace.md) for setup, debugging,
 Release builds, log tasks, Codex worktrees, and configuration boundaries.
+
+## Codex Cloud
+
+Cloud can build and test `NotchCore`, debug portable logic with LLDB, and lint
+all Swift sources. The app's UI and macOS integrations require a Mac for builds
+and runtime checks.
+
+For a new Ubuntu 24.04 environment, use `./script/setup-cloud.sh` as its install
+script and `./script/verify.sh` to validate the setup. Swift 6.4 and LLDB run
+natively, so Docker is not required. See [the Cloud guide](docs/cloud.md) for
+environment creation, network access, focused tests, debugging, and macOS handoff.

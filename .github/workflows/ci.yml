@@ -11,6 +11,7 @@ on:
       - ".swift-format"
       - ".github/workflows/ci.yml"
       - "scripts/ci-swift.sh"
+      - "script/**"
       - "project.yml"
       - "App/**"
   pull_request:
@@ -23,6 +24,7 @@ on:
       - ".swift-format"
       - ".github/workflows/ci.yml"
       - "scripts/ci-swift.sh"
+      - "script/**"
       - "project.yml"
       - "App/**"
   workflow_dispatch:
@@ -52,6 +54,12 @@ jobs:
       SWIFT_IMAGE: swift:6.4-noble
     steps:
       - uses: actions/checkout@v6
+
+      - name: Validate workspace scripts
+        run: |
+          for script in script/*.sh scripts/*.sh; do
+            bash -n "$script"
+          done
 
       - name: Check for a Swift package
         id: package

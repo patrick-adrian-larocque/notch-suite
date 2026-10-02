@@ -18,3 +18,10 @@
 - Run `./script/setup.sh` to resolve the core package and generate the macOS project.
 - Run `./script/verify.sh` before pushing; app changes also require `./script/build_and_run.sh --build-only`.
 - Use `./script/build_and_run.sh --verify` to build, launch, and check the app process.
+
+## Codex Cloud (Linux)
+
+- Read `docs/cloud.md` when preparing or working in a Cloud environment. Use `./script/setup-cloud.sh` for the environment's install script; ordinary setup remains `./script/setup.sh` once Swift is installed.
+- Run `./script/verify.sh` before pushing from Cloud. It builds and tests `NotchCore` and lints `Sources`, `Tests`, and `App`; it does not compile the macOS app.
+- Keep portable logic in `NotchCore` and macOS services behind its protocols. Use core tests and fixtures to debug state, parsers, geometry, and shelf behavior on Linux.
+- App changes still require `./script/build_and_run.sh --build-only` on a Mac or the macOS CI job before they are considered verified. When working in Cloud, report that check as pending rather than trying to run Xcode on Linux or claiming source lint verifies the app.
