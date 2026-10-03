@@ -113,6 +113,70 @@ import Testing
         }
     }
 
+    // MARK: Notch height
+
+    @Test func defaultNotchHeightIsTheDesigns() {
+        #expect(IslandLayout().notchHeight == 32)
+        #expect(IslandLayout.design.notchHeight == IslandLayout.designNotchHeight)
+    }
+
+    /// A 14-inch MacBook Pro's notch is 33.5 pt tall, taller than the canvas's 32 pt
+    /// idle pill, which left a sliver of notch showing below it.
+    @Test func compactIdleIsAsTallAsAMeasuredNotch() {
+        let layout = IslandLayout(notchWidth: 185, notchHeight: 33.5)
+        let compact = layout.size(for: .idle, at: .compact)
+        #expect(compact.height == 33.5)
+        #expect(compact.width == 185)
+        #expect(compact.cornerRadius == 10)
+        // Sizes already taller than the notch keep the canvas height.
+        #expect(layout.size(for: .idle, at: .peek).height == 36)
+        #expect(layout.size(for: .nowPlaying, at: .compact).height == 36)
+        #expect(layout.size(for: .idle, at: .open).height == 156)
+    }
+
+    @Test(arguments: IslandMode.allCases, IslandLevel.allCases)
+    func noIslandIsShorterThanTheNotch(mode: IslandMode, level: IslandLevel) {
+        for notchHeight in [24.0, 32, 33.5, 38, 44] {
+            let layout = IslandLayout(notchWidth: 196, notchHeight: notchHeight)
+            let size = layout.size(for: mode, at: level)
+            let design = IslandLayout.design.size(for: mode, at: level)
+            #expect(size.height == max(design.height, notchHeight))
+            #expect(size.width == design.width)
+            #expect(size.cornerRadius == design.cornerRadius)
+        }
+    }
+
+    @Test func layoutFromGeometryUsesTheMeasuredNotch() {
+        let geometry = NotchGeometry(
+            notchWidth: 185, notchHeight: 33.5, leftAreaWidth: 659, rightAreaWidth: 668,
+            isPhysical: true)
+        let layout = IslandLayout(geometry: geometry)
+        #expect(layout == IslandLayout(notchWidth: 185, notchHeight: 33.5))
+    }
+
+    // MARK: Bounds and hit targets
+
+    @Test func maximumSizeCoversEveryIsland() {
+        #expect(IslandLayout.design.maximumWidth == 460)
+        #expect(IslandLayout.design.maximumHeight == 206)
+        // A wide notch pushes now playing's peek and open past the canvas's 460.
+        #expect(IslandLayout(notchWidth: 240).maximumWidth == 484)
+        #expect(IslandLayout(notchHeight: 250).maximumHeight == 250)
+    }
+
+    @Test func hitTargetIsAtLeastTheMinimum() {
+        #expect(IslandSize.minimumHitTarget == 44)
+        let compact = IslandLayout.design.size(for: .idle, at: .compact)
+        #expect(compact.hitTargetWidth == 196)
+        #expect(compact.hitTargetHeight == 44)
+        let open = IslandLayout.design.size(for: .idle, at: .open)
+        #expect(open.hitTargetWidth == 440)
+        #expect(open.hitTargetHeight == 156)
+        let tiny = IslandSize(width: 30, height: 20, cornerRadius: 4)
+        #expect(tiny.hitTargetWidth == 44)
+        #expect(tiny.hitTargetHeight == 44)
+    }
+
     @Test func levelsAreOrdered() {
         #expect(IslandLevel.allCases.sorted() == [.compact, .peek, .open])
         #expect(IslandLevel.compact < .peek)

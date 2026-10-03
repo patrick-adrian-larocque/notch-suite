@@ -2,8 +2,7 @@
 ///
 /// `IslandStateMachine` gets its timing from this protocol instead of `Timer`, a run
 /// loop or Dispatch, so tests can drive time by hand and the logic runs on Linux. The
-/// app target supplies the real implementation, for example a `Task` that sleeps on a
-/// `ContinuousClock`.
+/// app runs with ``TaskDelayScheduler``, a `Task` that sleeps on the continuous clock.
 @MainActor
 public protocol DelayScheduler {
     /// Schedules `action` to run once, `delay` from now, on the main actor.

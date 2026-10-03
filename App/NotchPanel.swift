@@ -21,9 +21,10 @@ final class NotchPanel: NSPanel {
         hidesOnDeactivate = false
         isMovable = false
         isReleasedWhenClosed = false
-        // The placeholder has nothing to click. Hover and clicks arrive with the state
-        // machine (#17), which turns mouse events back on.
+        // Mouse events pass through until the pointer is over the island.
+        // `NotchPanelController` turns them on only while it is.
         ignoresMouseEvents = true
+        acceptsMouseMovedEvents = true
     }
 
     override var canBecomeKey: Bool { false }

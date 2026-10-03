@@ -178,6 +178,40 @@ private func isClose(_ a: Double, _ b: Double) -> Bool {
         }
         #expect(spec.animatesEqualizer == false)
         #expect(spec.animatesPulse == false)
+        #expect(spec.islandSpring == nil)
+    }
+
+    // MARK: Spring
+
+    @Test(arguments: [
+        (IslandSettings.MotionCurve.bouncy, 0.5, 0.3),
+        (.snappy, 0.34, 0.15),
+        (.smooth, 0.42, 0),
+    ])
+    func eachCurveHasASpring(curve: IslandSettings.MotionCurve, duration: Double, bounce: Double) {
+        #expect(curve.baseSpring == MotionSpec.Spring(duration: duration, bounce: bounce))
+        let spec = MotionSpec(
+            settings: IslandSettings(motionCurve: curve), systemReduceMotion: false)
+        #expect(spec.islandSpring == curve.baseSpring)
+    }
+
+    @Test(arguments: IslandSettings.MotionCurve.allCases, [0.5, 1.0, 2.0])
+    func springDurationScalesWithSpeedButBounceDoesNot(
+        curve: IslandSettings.MotionCurve, speed: Double
+    ) {
+        let settings = IslandSettings(motionCurve: curve, speed: speed)
+        let spring = MotionSpec(settings: settings, systemReduceMotion: false).islandSpring
+        #expect(isClose(spring?.duration ?? -1, curve.baseSpring.duration / speed))
+        #expect(spring?.bounce == curve.baseSpring.bounce)
+    }
+
+    @Test func springsBounceLessThanTheCanvasCurvesOvershoot() {
+        // Only the curves that overshoot get a bounce, and none is close to undamped.
+        for curve in IslandSettings.MotionCurve.allCases {
+            let overshoots = curve.timingCurve.y1 > 1 || curve.timingCurve.y2 > 1
+            #expect((curve.baseSpring.bounce > 0) == overshoots)
+            #expect(curve.baseSpring.bounce < 0.5)
+        }
     }
 
     @Test func systemReduceMotionAloneGivesTheSameFade() {

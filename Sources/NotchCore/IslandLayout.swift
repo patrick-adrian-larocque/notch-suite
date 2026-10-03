@@ -65,6 +65,22 @@ public struct IslandSize: Sendable, Hashable {
         self.height = height
         self.cornerRadius = cornerRadius
     }
+
+    /// The smallest width and height the pointer can hit, in points, from Apple's
+    /// Human Interface Guidelines.
+    public static let minimumHitTarget: Double = 44
+
+    /// The width of the area that responds to the pointer: ``width``, but at least
+    /// ``minimumHitTarget``.
+    public var hitTargetWidth: Double { max(width, Self.minimumHitTarget) }
+
+    /// The height of the area that responds to the pointer: ``height``, but at least
+    /// ``minimumHitTarget``.
+    ///
+    /// The compact island is shorter than this, so its hit area reaches a little below
+    /// the island. That keeps the target at the minimum without drawing the island any
+    /// taller than the notch.
+    public var hitTargetHeight: Double { max(height, Self.minimumHitTarget) }
 }
 
 /// Maps a mode and level to the island's size.
@@ -73,23 +89,65 @@ public struct IslandSize: Sendable, Hashable {
 /// notch width and `W` is the mode's ``IslandMode/compactWing`` or
 /// ``IslandMode/peekWing``. Open sizes are fixed, except that open is never narrower
 /// than peek: on a notch wide enough to push peek past the design's open width, open
-/// takes the peek width. With the design's 196 pt notch this
-/// reproduces the canvas sizes exactly; on a Mac with a different notch, pass its width.
+/// takes the peek width. No size is shorter than the notch, so the island covers the
+/// camera housing without a gap below it. With the design's 196 × 32 pt notch this
+/// reproduces the canvas sizes exactly; on a Mac with a different notch, pass its size.
 public struct IslandLayout: Sendable, Hashable {
     /// The notch width the design canvas was drawn against, in points.
     public static let designNotchWidth: Double = 196
 
-    /// The layout at the design's notch width.
+    /// The notch height the design canvas was drawn against, in points.
+    public static let designNotchHeight: Double = 32
+
+    /// The layout at the design's notch size.
     public static let design = IslandLayout()
 
     /// The width of the physical notch, in points.
     public var notchWidth: Double
 
-    public init(notchWidth: Double = IslandLayout.designNotchWidth) {
+    /// The height of the physical notch, in points. Every island is at least this tall.
+    public var notchHeight: Double
+
+    public init(
+        notchWidth: Double = IslandLayout.designNotchWidth,
+        notchHeight: Double = IslandLayout.designNotchHeight
+    ) {
         self.notchWidth = notchWidth
+        self.notchHeight = notchHeight
     }
 
+    /// The layout around the notch `geometry` describes, real or virtual.
+    public init(geometry: NotchGeometry) {
+        self.init(notchWidth: geometry.notchWidth, notchHeight: geometry.notchHeight)
+    }
+
+    /// The island's size for `mode` at `level`.
     public func size(for mode: IslandMode, at level: IslandLevel) -> IslandSize {
+        var size = designSize(for: mode, at: level)
+        size.height = max(size.height, notchHeight)
+        return size
+    }
+
+    /// The width of the widest island over every mode and level.
+    ///
+    /// The window that holds the island needs at least this much room.
+    public var maximumWidth: Double {
+        allSizes.map(\.width).max() ?? 0
+    }
+
+    /// The height of the tallest island over every mode and level.
+    public var maximumHeight: Double {
+        allSizes.map(\.height).max() ?? 0
+    }
+
+    private var allSizes: [IslandSize] {
+        IslandMode.allCases.flatMap { mode in
+            IslandLevel.allCases.map { size(for: mode, at: $0) }
+        }
+    }
+
+    /// The canvas size, before the notch height is applied.
+    private func designSize(for mode: IslandMode, at level: IslandLevel) -> IslandSize {
         switch level {
         case .compact:
             IslandSize(
