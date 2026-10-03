@@ -1,5 +1,7 @@
 # Media engine integration scaffolding
 
+Requirements, sources and open blockers: [docs/requirements/now-playing.md](../../docs/requirements/now-playing.md).
+
 These Swift files reserve the adaptation points for issue #24. They contain TODOs
 only: no engine, fake player, or no-op `NowPlayingSource` is installed. Keep the
 existing app behavior until the real implementation is ready.
