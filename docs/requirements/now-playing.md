@@ -61,7 +61,7 @@ seeking, or lyrics. They can come later as separate issues if wanted.
 
 | # | Check | How |
 | --- | --- | --- |
-| A1 | Music and Spotify playback updates the island within 1 s | manual, Developer ID signed build |
+| A1 | Music and Spotify playback updates the island within 1 s | manual, Debug build |
 | A2 | prev/play/pause/next reach the player | manual |
 | A3 | Slow or missing artwork shows the fallback | manual plus `ArtworkState` tests |
 | A4 | Engine missing or killed: no fake "nothing playing", recovers | unit test with a fake process plus manual `kill` |
@@ -78,20 +78,20 @@ seeking, or lyrics. They can come later as separate issues if wanted.
 | Owner fork is 1 commit behind upstream (a dev convenience script only) | `gh api compare` | 2026-10-03 |
 | Adapter builds universal (x86_64, arm64) with CMake, ad-hoc signed by default | local build | local 2026-10-03 |
 | `test` exits 0 with an ad-hoc framework on macOS 27.2 | local run | local 2026-10-03 |
-| With an ad-hoc framework, `get` printed `null` and `stream` printed only an empty payload while QuickTime was playing | local run | local 2026-10-03, see open question 1 |
-| A Developer ID signature on the framework is required for data on 15.4+; ad-hoc loads but returns empty sessions | ultra-media-remote README (third party, not upstream) | online only, not confirmed |
+| An ad-hoc signed framework returns full data: `get`, `stream` (with `diff:false` updates) and `send 1` (pause delivered) all worked against a test app publishing `MPNowPlayingInfoCenter` | local probe app | local 2026-10-03 |
+| QuickTime Player and Safari playing a local file published nothing (`null`), so they can't be used to test | local run | local 2026-10-03 |
+| A third-party README claims a Developer ID signature is required on 15.4+ | ultra-media-remote README | contradicted locally on 27.2; recheck if data stops |
+| The payload can omit `bundleIdentifier` (the test app had none), which our parser treats as "nothing playing" | local probe; adapter README says it is mandatory | local 2026-10-03, see open question 1 |
 | boring.notch vendors the same three files, ad-hoc signed in the repo, re-signed when the app is signed | boring.notch `dev` `mediaremote-adapter/` | 2026-10-03 |
-| Commands may be blocked on macOS 26.1+ for some setups | gist comment (ejbills, 2025-11) | online only, not confirmed |
+| Commands may be blocked on macOS 26.1+ for some setups | gist comment (ejbills, 2025-11) | contradicted locally: `send 1` paused the test app on 27.2 |
 | Commands always go to the system's elected player, not a chosen app | adapter issue #41 | online 2026-10-03 |
 | Apple has said scripting runtimes, including Perl, may not ship by default in future macOS; still present in 27.2 | Xcode 11 release notes (2019); local `/usr/bin/perl` | 2026-10-03 |
 
 ## Open questions and blockers
 
-1. **Signing (blocker for A1).** This Mac has no code-signing identity
-   (`security find-identity` found 0). The ad-hoc test returned no data, which matches the
-   third-party Developer ID claim, but QuickTime may simply not publish Now Playing. Needs
-   a test with Music or Spotify playing, signed with an Apple Development or Developer ID
-   certificate. Until then, A1 and A2 can't pass locally.
-2. **Commands on 26.1+.** Confirm `send` works on this Mac once data flows.
+1. **Missing `bundleIdentifier`.** Only seen with an unbundled test binary, which real
+   players don't do. Confirm with Music or Spotify; if it happens there, relax the parser.
+2. **Signing.** No blocker on this Mac today (no signing identity needed). If a later
+   macOS starts returning empty sessions, try an Apple Development signature first.
 3. **Perl removal risk.** If a future macOS drops `/usr/bin/perl`, the engine stops. R3
    makes that visible instead of silent; no fallback is planned now.
