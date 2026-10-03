@@ -1,6 +1,6 @@
 ---
 name: linux-check
-description: Run CI's Linux job locally on a Mac through OrbStack (scripts/ci-swift.sh): build, test, and strict lint in the swift:6.4-noble image. Use to check Linux parity before pushing, or when CI's Linux job fails but /swift-check passes.
+description: "Run CI's Linux job locally on a Mac through OrbStack (scripts/ci-swift.sh): build, test, and strict lint in the swift:6.4-noble image. Use to check Linux parity before pushing, or when CI's Linux job fails but /swift-check passes."
 allowed-tools:
   - Bash(scripts/ci-swift.sh *)
   - Bash(orbctl status)
