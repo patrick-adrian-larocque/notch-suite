@@ -53,3 +53,26 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGN_STYLE: Automatic
         ENABLE_HARDENED_RUNTIME: NO
+
+  # Logic tests for App/, which can't build or test on Linux. Covers the seams NotchCore
+  # can't reach: NowPlayingPresentation and friends, over a fake NowPlayingSource.
+  NotchSuiteTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - AppTests
+    dependencies:
+      - target: NotchSuite
+      - package: NotchSuitePackage
+        product: NotchCore
+    scheme:
+      testTargets:
+        - NotchSuiteTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.patricklarocque.NotchSuiteTests
+        SWIFT_VERSION: "6.0"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Automatic
