@@ -72,9 +72,10 @@ final class MediaRemoteEngine {
     static let maximumRestartDelay: Duration = .seconds(30)
     /// A run that lasts this long counts as healthy and resets the restart delay.
     static let healthyRunDuration: Duration = .seconds(10)
-    /// Arguments after `stream`. Artwork is left out so updates stay small; the
-    /// adapter's `--debounce` merges bursts of small changes.
-    static let streamOptions = ["--no-artwork", "--debounce=100"]
+    /// Arguments after `stream`. Artwork is included: with diffs on, the adapter sends it
+    /// once per track (up to a few hundred KB from Safari), not with every update.
+    /// `--debounce` merges bursts of small changes.
+    static let streamOptions = ["--debounce=100"]
 
     /// Called with each complete line of `stream` output, without its line ending.
     var onLine: (String) -> Void = { _ in }

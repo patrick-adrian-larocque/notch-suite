@@ -27,16 +27,21 @@ final class AppEnvironment {
     let appIdentityResolver = AppIdentityResolver()
     /// What is playing, from mediaremote-adapter.
     let nowPlayingSource = MediaRemoteNowPlayingSource()
+    /// Playback, artwork and the player's identity for the Now Playing views.
+    let nowPlaying: NowPlayingPresentation
     /// The notch panel and its pointer handling.
     let panelController: NotchPanelController
 
     init() {
         let geometryProvider = ScreenNotchGeometryProvider()
         stateMachine = IslandStateMachine(scheduler: TaskDelayScheduler())
+        nowPlaying = NowPlayingPresentation(
+            source: nowPlayingSource, stateMachine: stateMachine, resolver: appIdentityResolver)
         islandModel = IslandModel(
             stateMachine: stateMachine,
             geometry: geometryProvider.geometry()
-                ?? NotchGeometry(metrics: ScreenMetrics(screenWidth: 0, topInset: 0)))
+                ?? NotchGeometry(metrics: ScreenMetrics(screenWidth: 0, topInset: 0)),
+            nowPlaying: nowPlaying)
         panelController = NotchPanelController(
             model: islandModel,
             geometryProvider: geometryProvider,
@@ -46,6 +51,7 @@ final class AppEnvironment {
     /// Shows the island and starts the media source. Call once, after launch.
     func start() {
         panelController.show()
+        nowPlaying.start()
         nowPlayingSource.start()
         #if DEBUG
             logNowPlayingForProbe()
@@ -54,6 +60,7 @@ final class AppEnvironment {
 
     /// Ends child processes. Call when the app terminates.
     func stop() {
+        nowPlaying.stop()
         nowPlayingSource.stop()
     }
 

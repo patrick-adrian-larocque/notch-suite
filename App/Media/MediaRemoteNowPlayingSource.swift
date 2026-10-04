@@ -32,6 +32,15 @@ final class MediaRemoteNowPlayingSource {
 
     /// The last update observers got. `nil` means no session, or none reported yet.
     private(set) var current: NowPlaying?
+    /// The current artwork bytes, or `nil` when there is none. Kept apart from
+    /// `NowPlaying` so that core type stays small; see `onArtworkChange`.
+    private(set) var artwork: Data?
+    /// Called when ``artwork`` changes. Artwork arrives once per track, often a moment
+    /// after the track's first update.
+    var onArtworkChange: (Data?) -> Void = { _ in }
+    /// Called when the engine's status changes, so callers can show "unavailable"
+    /// rather than an idle island while it is down.
+    var onEngineStatusChange: (MediaRemoteEngine.Status) -> Void = { _ in }
     /// The engine's status, for showing that the source is down rather than idle.
     var engineStatus: MediaRemoteEngine.Status { engine.status }
 
@@ -74,15 +83,18 @@ final class MediaRemoteNowPlayingSource {
         }
         switch report {
         case .session(let nowPlaying):
+            updateArtwork(parser.artworkData)
             publish(nowPlaying)
         case .noSession:
             if linesSinceStart == 1 {
                 pendingNoSession = Task { [weak self] in
                     try? await Task.sleep(for: Self.firstEmptyPayloadGrace)
                     guard !Task.isCancelled else { return }
+                    self?.updateArtwork(nil)
                     self?.publish(nil)
                 }
             } else {
+                updateArtwork(nil)
                 publish(nil)
             }
         case .incomplete(let missingKeys):
@@ -90,6 +102,12 @@ final class MediaRemoteNowPlayingSource {
                 "incomplete adapter state, missing \(missingKeys.joined(separator: ", "), privacy: .public)"
             )
         }
+    }
+
+    private func updateArtwork(_ data: Data?) {
+        guard data != artwork else { return }
+        artwork = data
+        onArtworkChange(data)
     }
 
     private func publish(_ nowPlaying: NowPlaying?) {
@@ -111,6 +129,7 @@ final class MediaRemoteNowPlayingSource {
             parser = NowPlayingStreamParser()
             linesSinceStart = 0
         }
+        onEngineStatusChange(status)
     }
 
     private func addObserver(_ continuation: AsyncStream<NowPlaying?>.Continuation) {

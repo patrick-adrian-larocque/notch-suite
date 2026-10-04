@@ -92,6 +92,13 @@ struct IslandView: View {
         switch (mode, level) {
         case (.idle, .open):
             IdleOpenView(palette: palette, collapse: { model.stateMachine.collapse() })
+        case (.nowPlaying, _):
+            if let nowPlaying = model.nowPlaying {
+                NowPlayingIslandView(
+                    presentation: nowPlaying, level: level, size: model.islandSize,
+                    notchWidth: model.geometry.notchWidth, palette: palette,
+                    motion: model.motion, collapse: { model.stateMachine.collapse() })
+            }
         default:
             // Compact and peek idle are an empty pill. The other modes' views arrive with
             // their own issues.
