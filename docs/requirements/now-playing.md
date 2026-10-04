@@ -35,8 +35,9 @@ seeking, or lyrics. They can come later as separate issues if wanted.
 - R4. Stop the child on quit and on sleep, restart on wake. No orphaned perl processes.
 
 **Data**
-- R5. Feed each complete stdout line to `NowPlayingStreamParser`. A rejected line is
-  logged and the last good state is kept.
+- R5. Feed each complete stdout line to `NowPlayingStreamParser` and act on its
+  `NowPlayingReport` (PR #50): `.session` yields the track, `.noSession` yields `nil`,
+  and `.incomplete` or a rejected line is logged while the last good state is kept.
 - R6. Ignore the empty first payload (`{"payload":{}}`); upstream issue #23 says
   stream always prints it.
 - R7. Treat non-finite `duration` as unknown (upstream issue #28).
@@ -81,7 +82,7 @@ seeking, or lyrics. They can come later as separate issues if wanted.
 | An ad-hoc signed framework returns full data: `get`, `stream` (with `diff:false` updates) and `send 1` (pause delivered) all worked against a test app publishing `MPNowPlayingInfoCenter` | local probe app | local 2026-10-03 |
 | QuickTime Player and Safari playing a local file published nothing (`null`), so they can't be used to test | local run | local 2026-10-03 |
 | A third-party README claims a Developer ID signature is required on 15.4+ | ultra-media-remote README | contradicted locally on 27.2; recheck if data stops |
-| The payload can omit `bundleIdentifier` (the test app had none), which our parser treats as "nothing playing" | local probe; adapter README says it is mandatory | local 2026-10-03, see open question 1 |
+| The payload can omit `bundleIdentifier`. The adapter's source requires only `processIdentifier`, `playing` and `title` (`src/adapter/keys.m`) and adds `bundleIdentifier` when it can look the process up; its README is wrong. Handled by PR #50: identity is optional and a missing bundle ID is still a session | local probe; adapter source | local 2026-10-03, source 2026-10-04 |
 | boring.notch vendors the same three files, ad-hoc signed in the repo, re-signed when the app is signed | boring.notch `dev` `mediaremote-adapter/` | 2026-10-03 |
 | Commands may be blocked on macOS 26.1+ for some setups | gist comment (ejbills, 2025-11) | contradicted locally: `send 1` paused the test app on 27.2 |
 | Commands always go to the system's elected player, not a chosen app | adapter issue #41 | online 2026-10-03 |
@@ -89,8 +90,9 @@ seeking, or lyrics. They can come later as separate issues if wanted.
 
 ## Open questions and blockers
 
-1. **Missing `bundleIdentifier`.** Only seen with an unbundled test binary, which real
-   players don't do. Confirm with Music or Spotify; if it happens there, relax the parser.
+1. **Missing `bundleIdentifier`.** Resolved in PR #50: the parser already treats it as a
+   normal session. Still worth confirming with Music or Spotify that real players send a
+   bundle ID, so the island can show the player's name and icon.
 2. **Signing.** No blocker on this Mac today (no signing identity needed). If a later
    macOS starts returning empty sessions, try an Apple Development signature first.
 3. **Perl removal risk.** If a future macOS drops `/usr/bin/perl`, the engine stops. R3
