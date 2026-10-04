@@ -30,6 +30,29 @@ struct AppIdentityResolver {
     /// original process exited. Then the bundle identifier is tried against the installed
     /// applications. When neither works, only what the identity carries is returned.
     func resolve(_ identity: AppIdentity) -> ResolvedAppIdentity {
+        resolve(identity, parentBundleIdentifier: nil)
+    }
+
+    /// Resolves the application a user would recognize for `nowPlaying`.
+    ///
+    /// A web player plays through a helper process (Safari reports
+    /// `com.apple.WebKit.GPU`, "Safari Graphics and Media"), and the media source then
+    /// names the browser as the parent. The parent's name and icon are what a user
+    /// recognizes, so they win when it is installed; `identity` stays the playing process.
+    func resolve(_ nowPlaying: NowPlaying) -> ResolvedAppIdentity {
+        resolve(
+            nowPlaying.app, parentBundleIdentifier: nowPlaying.parentApplicationBundleIdentifier)
+    }
+
+    private func resolve(_ identity: AppIdentity, parentBundleIdentifier: String?)
+        -> ResolvedAppIdentity
+    {
+        if let parentBundleIdentifier,
+            let parent = installedApplication(
+                bundleIdentifier: parentBundleIdentifier, for: identity)
+        {
+            return parent
+        }
         if let app = runningApplication(for: identity) {
             return ResolvedAppIdentity(
                 identity: identity,
@@ -38,17 +61,28 @@ struct AppIdentityResolver {
                 icon: app.icon)
         }
         if let bundleIdentifier = identity.bundleIdentifier,
-            let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier)
+            let installed = installedApplication(bundleIdentifier: bundleIdentifier, for: identity)
         {
-            return ResolvedAppIdentity(
-                identity: identity,
-                bundleIdentifier: bundleIdentifier,
-                displayName: Self.displayName(ofApplicationAt: url),
-                icon: NSWorkspace.shared.icon(forFile: url.path))
+            return installed
         }
         return ResolvedAppIdentity(
             identity: identity, bundleIdentifier: identity.bundleIdentifier, displayName: nil,
             icon: nil)
+    }
+
+    /// The installed application with `bundleIdentifier`, or `nil` when there is none.
+    private func installedApplication(bundleIdentifier: String, for identity: AppIdentity)
+        -> ResolvedAppIdentity?
+    {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier)
+        else {
+            return nil
+        }
+        return ResolvedAppIdentity(
+            identity: identity,
+            bundleIdentifier: bundleIdentifier,
+            displayName: Self.displayName(ofApplicationAt: url),
+            icon: NSWorkspace.shared.icon(forFile: url.path))
     }
 
     /// The running process `identity` names, or `nil` when it exited or its process

@@ -73,7 +73,7 @@ final class AppEnvironment {
                         mediaRemoteLog.notice("probe: update nil (no session)")
                         continue
                     }
-                    let app = resolver.resolve(nowPlaying.app)
+                    let app = resolver.resolve(nowPlaying)
                     mediaRemoteLog.notice(
                         "probe: update playing=\(nowPlaying.playing, privacy: .public) app=\(app.displayName ?? "-", privacy: .public) icon=\(app.icon != nil, privacy: .public)"
                     )
