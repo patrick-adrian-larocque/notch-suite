@@ -5,7 +5,9 @@ code from, or was directly derived from. This project's own license
 ================================================================================
 mediaremote-adapter
 https://github.com/ungive/mediaremote-adapter
-Used for: Now Playing media detection and playback control.
+Used for: Now Playing media detection and playback control. The script and a
+build of the framework are bundled unmodified from revision 73f14ab; see
+Vendor/mediaremote-adapter/README.md.
 License: BSD 3-Clause
 ================================================================================
 

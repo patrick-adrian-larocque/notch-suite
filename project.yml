@@ -21,11 +21,18 @@ targets:
     platform: macOS
     sources:
       - App
-    # TODO(#24): Package pinned mediaremote-adapter launcher/framework resources.
-    # See App/Media/MediaRemoteEngine.swift for paths, signing, and attribution work.
+      # Now Playing engine (#24): the script runs under /usr/bin/perl and loads the
+      # framework by path, so the framework is copied, never linked.
+      # See Vendor/mediaremote-adapter/README.md.
+      - path: Vendor/mediaremote-adapter/mediaremote-adapter.pl
+        buildPhase: resources
     dependencies:
       - package: NotchSuitePackage
         product: NotchCore
+      - framework: Vendor/mediaremote-adapter/MediaRemoteAdapter.framework
+        embed: true
+        link: false
+        codeSign: true
     scheme: {}
     settings:
       base:
