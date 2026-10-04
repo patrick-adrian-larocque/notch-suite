@@ -13,7 +13,7 @@ Run the Linux side of CI from the repository root and report the result. `/swift
 3. Run these in order, stopping at the first failure. Pass no environment variables: the script defaults to the image `ci.yml` pins.
    1. `scripts/ci-swift.sh build --build-tests`
    2. `scripts/ci-swift.sh test --skip-build`
-   3. `scripts/ci-swift.sh format lint --strict --recursive Sources Tests App`
+   3. `scripts/ci-swift.sh format lint --strict --recursive Sources Tests App AppTests`
 4. Report one line per step: passed or failed. For a failure, show the first real error with `file:line` and the smallest useful excerpt, then propose a fix. Don't change any files unless asked.
 
 Notes:

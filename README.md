@@ -63,7 +63,7 @@ macOS 14+, Xcode. The core builds with SwiftPM:
 
     swift build --build-tests
     swift test --skip-build
-    swift format lint --strict --recursive Sources Tests App
+    swift format lint --strict --recursive Sources Tests App AppTests
 
 The app's Xcode project is generated from `project.yml` with
 [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`):

@@ -8,7 +8,7 @@ Three layers, each depending only on the one before it:
 
 1. `NotchCore` (`Sources/NotchCore`): pure Swift with no AppKit, SwiftUI, or Combine. It builds and tests on Linux. Use `Observation` and async sequences for reactive state.
 2. `NotchUI` (planned): SwiftUI views. macOS only. Until it exists, the few views live in the app target, because a SwiftUI target in `Package.swift` would break `swift build` on Linux.
-3. App target `NotchSuite` (`App/`, generated from `project.yml` by XcodeGen): the macOS app and its system integration.
+3. App target `NotchSuite` (`App/`, generated from `project.yml` by XcodeGen): the macOS app and its system integration. `AppTests/` holds its logic tests, built as the `NotchSuiteTests` Xcode target; it isn't part of the SwiftPM package, so it only runs through Xcode, not `swift test`.
 
 Mac-only services (MediaRemote, screen and notch geometry, the file system, AirDrop) sit behind protocols defined in `NotchCore` and are implemented in the app target. That keeps the logic testable on Linux.
 
@@ -19,15 +19,15 @@ Run from the repository root.
 ```sh
 swift build --build-tests
 swift test --skip-build
-swift format lint --strict --recursive Sources Tests App
+swift format lint --strict --recursive Sources Tests App AppTests
 ```
 
 - `/swift-check` runs all three in order and reports one line per step. Run it before every push.
-- `swift test --skip-build` only runs what `swift build --build-tests` already built, so run them in that order. On its own it reports failures.
-- To fix formatting: `swift format format --in-place --recursive Sources Tests App`.
+- `swift test --skip-build` only runs what `swift build --build-tests` already built, so run them in that order. On its own it reports failures. It doesn't cover `AppTests/`; run the `NotchSuiteTests` scheme in Xcode for that.
+- To fix formatting: `swift format format --in-place --recursive Sources Tests App AppTests`.
 - On a Mac these run natively. In Claude Code cloud sessions `swift` is a wrapper that runs Linux Swift in Docker (`.claude/hooks/session-start.sh`).
-- To run the Linux side of CI from a Mac, use `/linux-check`, or run `scripts/ci-swift.sh test` for the build and tests and `scripts/ci-swift.sh format lint --strict --recursive Sources Tests App` for the lint. `SWIFT_IMAGE` defaults to the image `ci.yml` pins, so no environment prefix is needed. It needs Docker (OrbStack on the owner's Mac); the script starts OrbStack if it isn't running. It shares `.build` with the macOS build, which works. Set `SWIFT_PLATFORM=linux/amd64` to match GitHub's x86_64 runners (slower).
-- The macOS app needs a Mac with Xcode and XcodeGen (`brew install xcodegen`). Generate the Xcode project first; it is gitignored, so regenerate it after pulling a change to `project.yml` or adding or removing a file in `App/`:
+- To run the Linux side of CI from a Mac, use `/linux-check`, or run `scripts/ci-swift.sh test` for the build and tests and `scripts/ci-swift.sh format lint --strict --recursive Sources Tests App AppTests` for the lint. `SWIFT_IMAGE` defaults to the image `ci.yml` pins, so no environment prefix is needed. It needs Docker (OrbStack on the owner's Mac); the script starts OrbStack if it isn't running. It shares `.build` with the macOS build, which works. Set `SWIFT_PLATFORM=linux/amd64` to match GitHub's x86_64 runners (slower).
+- The macOS app needs a Mac with Xcode and XcodeGen (`brew install xcodegen`). Generate the Xcode project first; it is gitignored, so regenerate it after pulling a change to `project.yml` or adding or removing a file in `App/` or `AppTests/`:
 
   ```sh
   xcodegen generate

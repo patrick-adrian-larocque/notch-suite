@@ -14,7 +14,7 @@ Run this project's required pre-push checks from the repository root and report 
 3. Run these in order, stopping at the first failure:
    1. `swift build --build-tests`
    2. `swift test --skip-build`
-   3. `swift format lint --strict --recursive Sources Tests App`
+   3. `swift format lint --strict --recursive Sources Tests App AppTests`
 4. Report one line per step: passed or failed. For a failure, show the first real error with `file:line` and the smallest useful excerpt of output, then propose a fix. Don't change any files unless asked.
 
 In cloud sessions `swift` runs Linux Swift inside Docker, so this covers the platform-independent code. SwiftUI and AppKit code is checked by the macOS job in `.github/workflows/ci.yml`.
