@@ -64,6 +64,17 @@ final class MediaRemoteNowPlayingSource {
         observers.removeAll()
     }
 
+    /// Ends the adapter for system sleep but keeps observers subscribed, unlike ``stop()``.
+    /// The engine resets the parser when ``resume()`` brings it back.
+    func suspend() {
+        pendingNoSession?.cancel()
+        pendingNoSession = nil
+        engine.stop()
+    }
+
+    /// Restarts the adapter after ``suspend()``.
+    func resume() { engine.start() }
+
     /// Applies one line of adapter output. Internal so tests and probes can feed lines.
     func ingest(_ line: String) {
         linesSinceStart += 1

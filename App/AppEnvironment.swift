@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import NotchCore
 
 /// Builds and owns the app's long-lived objects, and connects them.
@@ -32,6 +32,8 @@ final class AppEnvironment {
     /// The notch panel and its pointer handling.
     let panelController: NotchPanelController
 
+    private var sleepWakeObservers: [any NSObjectProtocol] = []
+
     init() {
         let geometryProvider = ScreenNotchGeometryProvider()
         stateMachine = IslandStateMachine(scheduler: TaskDelayScheduler())
@@ -53,13 +55,33 @@ final class AppEnvironment {
         panelController.show()
         nowPlaying.start()
         nowPlayingSource.start()
+        observeSleepAndWake()
         #if DEBUG
             logNowPlayingForProbe()
         #endif
     }
 
+    /// Stops the adapter on sleep and restarts it on wake (R4), so no child outlives sleep.
+    private func observeSleepAndWake() {
+        let center = NSWorkspace.shared.notificationCenter
+        let source = nowPlayingSource
+        let pairs: [(Notification.Name, @MainActor () -> Void)] = [
+            (NSWorkspace.willSleepNotification, { source.suspend() }),
+            (NSWorkspace.didWakeNotification, { source.resume() }),
+        ]
+        sleepWakeObservers = pairs.map { name, action in
+            center.addObserver(forName: name, object: nil, queue: .main) { _ in
+                MainActor.assumeIsolated { action() }
+            }
+        }
+    }
+
     /// Ends child processes. Call when the app terminates.
     func stop() {
+        for observer in sleepWakeObservers {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+        }
+        sleepWakeObservers = []
         nowPlaying.stop()
         nowPlayingSource.stop()
     }

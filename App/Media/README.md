@@ -20,8 +20,9 @@ branch. Architecture background: `docs/architecture-review.md`.
 | Compact, peek and open views | `NowPlayingIslandView.swift` | Done: artwork, eq bars, title, progress, transport controls, an engine-down subtitle. `#Preview`s with sample data cover all three levels. |
 
 The source runs from launch and the island now shows it: a session moves the island
-into `.nowPlaying` and back to idle when it ends. Not yet done: sleep/wake handling and
-a hands-on check with Music and Spotify (see "Next steps").
+into `.nowPlaying` and back to idle when it ends. Sleep/wake is handled in
+`AppEnvironment` (stop on `willSleep`, restart on `didWake`; built, not yet checked on a
+real sleep). Not yet done: a hands-on check with Music and Spotify (see "Next steps").
 
 ## Testing
 
@@ -79,8 +80,17 @@ on termination. Nothing else creates media objects.
 
 ## Next steps, in order
 
-1. Stop the adapter on sleep and start it on wake.
-2. Hands-on check with Music and Spotify (checked live only against a test player so far).
+1. Confirm on a real sleep/wake that `pgrep -fl mediaremote-adapter` is empty while asleep and returns on wake.
+2. Hands-on check with Music and Spotify (checked live only against a test player so far):
+   a valid session, identity resolved as far as the bundle ID or process ID allows (an absent
+   bundle ID is fine), a UI that works either way, and working updates and transport controls.
+
+Design choice, not a requirement: `suspend()` goes through `MediaRemoteEngine.stop()`, which
+resets the retry backoff, so a wake starts a new operating period at the initial 1 s delay.
+
+Test gap: `MediaRemoteSleepWakeTests` covers process lifecycle and observer streams with a stub
+script. It does not cover an update reaching the same observer after `resume()`, because under
+the test host the engine delivered no stdout lines even for a trivial script (cause not found).
 
 ## Checking it live
 

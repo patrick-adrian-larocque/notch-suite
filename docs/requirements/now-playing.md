@@ -92,8 +92,9 @@ seeking, or lyrics. They can come later as separate issues if wanted.
 ## Open questions and blockers
 
 1. **Missing `bundleIdentifier`.** Resolved in PR #50: the parser already treats it as a
-   normal session. Still worth confirming with Music or Spotify that real players send a
-   bundle ID, so the island can show the player's name and icon.
+   normal session. A missing bundle ID is valid evidence, not a failure. With Music and
+   Spotify, check that the source yields a session, identity resolves as far as the bundle
+   ID or process ID allows, the UI behaves without a bundle ID, and updates and controls work.
 2. **Signing.** No blocker on this Mac today (no signing identity needed). If a later
    macOS starts returning empty sessions, try an Apple Development signature first.
 3. **Perl removal risk.** If a future macOS drops `/usr/bin/perl`, the engine stops. R3
