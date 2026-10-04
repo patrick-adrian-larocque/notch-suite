@@ -32,6 +32,14 @@ private actor FakeNowPlayingSource: NowPlayingSource {
         }
     }
 
+    nonisolated func artworkUpdates() -> AsyncStream<Data?> {
+        AsyncStream { $0.finish() }
+    }
+
+    nonisolated func healthUpdates() -> AsyncStream<NowPlayingSourceHealth> {
+        AsyncStream { $0.finish() }
+    }
+
     func send(_ command: MediaCommand) {
         sent.append(command)
     }

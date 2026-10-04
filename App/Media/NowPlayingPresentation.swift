@@ -31,17 +31,19 @@ final class NowPlayingPresentation {
     /// The track to show: the current one, or `nil` when stopped.
     var nowPlaying: NowPlaying? { playback.nowPlaying }
 
-    @ObservationIgnored private let source: MediaRemoteNowPlayingSource
+    @ObservationIgnored private let source: any NowPlayingSource
     @ObservationIgnored private let stateMachine: IslandStateMachine
     @ObservationIgnored private let resolver: AppIdentityResolver
     @ObservationIgnored private var tracker = ArtworkTracker()
     @ObservationIgnored private var artworkBytes: Data?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
+    @ObservationIgnored private var artworkTask: Task<Void, Never>?
+    @ObservationIgnored private var healthTask: Task<Void, Never>?
     @ObservationIgnored private var artworkDeadlineTask: Task<Void, Never>?
     @ObservationIgnored private var decodeTask: Task<Void, Never>?
 
     init(
-        source: MediaRemoteNowPlayingSource, stateMachine: IslandStateMachine,
+        source: any NowPlayingSource, stateMachine: IslandStateMachine,
         resolver: AppIdentityResolver
     ) {
         self.source = source
@@ -51,22 +53,30 @@ final class NowPlayingPresentation {
 
     /// Starts following the source. Call once, after the source starts.
     func start() {
-        source.onArtworkChange = { [weak self] data in self?.artworkChanged(data) }
-        source.onEngineStatusChange = { [weak self] status in
-            if case .failed = status { self?.isEngineDown = true }
-            if case .unavailable = status { self?.isEngineDown = true }
-            if case .running = status { self?.isEngineDown = false }
-        }
         let updates = source.nowPlayingUpdates()
         updatesTask = Task { [weak self] in
             for await update in updates {
                 self?.apply(update)
             }
         }
+        let artworkUpdates = source.artworkUpdates()
+        artworkTask = Task { [weak self] in
+            for await data in artworkUpdates {
+                self?.artworkChanged(data)
+            }
+        }
+        let healthUpdates = source.healthUpdates()
+        healthTask = Task { [weak self] in
+            for await health in healthUpdates {
+                self?.isEngineDown = health == .down
+            }
+        }
     }
 
     func stop() {
         updatesTask?.cancel()
+        artworkTask?.cancel()
+        healthTask?.cancel()
         artworkDeadlineTask?.cancel()
         decodeTask?.cancel()
     }

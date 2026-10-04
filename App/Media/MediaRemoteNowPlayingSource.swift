@@ -33,14 +33,8 @@ final class MediaRemoteNowPlayingSource {
     /// The last update observers got. `nil` means no session, or none reported yet.
     private(set) var current: NowPlaying?
     /// The current artwork bytes, or `nil` when there is none. Kept apart from
-    /// `NowPlaying` so that core type stays small; see `onArtworkChange`.
+    /// `NowPlaying` so that core type stays small; see ``artworkUpdates()``.
     private(set) var artwork: Data?
-    /// Called when ``artwork`` changes. Artwork arrives once per track, often a moment
-    /// after the track's first update.
-    var onArtworkChange: (Data?) -> Void = { _ in }
-    /// Called when the engine's status changes, so callers can show "unavailable"
-    /// rather than an idle island while it is down.
-    var onEngineStatusChange: (MediaRemoteEngine.Status) -> Void = { _ in }
     /// The engine's status, for showing that the source is down rather than idle.
     var engineStatus: MediaRemoteEngine.Status { engine.status }
 
@@ -49,6 +43,8 @@ final class MediaRemoteNowPlayingSource {
     private var linesSinceStart = 0
     private var pendingNoSession: Task<Void, Never>?
     private var observers: [UUID: AsyncStream<NowPlaying?>.Continuation] = [:]
+    private var artworkObservers: [UUID: AsyncStream<Data?>.Continuation] = [:]
+    private var healthObservers: [UUID: AsyncStream<NowPlayingSourceHealth>.Continuation] = [:]
 
     init(engine: MediaRemoteEngine = MediaRemoteEngine()) {
         self.engine = engine
@@ -107,7 +103,7 @@ final class MediaRemoteNowPlayingSource {
     private func updateArtwork(_ data: Data?) {
         guard data != artwork else { return }
         artwork = data
-        onArtworkChange(data)
+        for continuation in artworkObservers.values { continuation.yield(data) }
     }
 
     private func publish(_ nowPlaying: NowPlaying?) {
@@ -129,7 +125,14 @@ final class MediaRemoteNowPlayingSource {
             parser = NowPlayingStreamParser()
             linesSinceStart = 0
         }
-        onEngineStatusChange(status)
+        switch status {
+        case .running:
+            for continuation in healthObservers.values { continuation.yield(.ready) }
+        case .failed, .unavailable:
+            for continuation in healthObservers.values { continuation.yield(.down) }
+        case .stopped:
+            break
+        }
     }
 
     private func addObserver(_ continuation: AsyncStream<NowPlaying?>.Continuation) {
@@ -138,6 +141,23 @@ final class MediaRemoteNowPlayingSource {
         continuation.yield(current)
         continuation.onTermination = { [weak self] _ in
             Task { @MainActor in self?.observers[id] = nil }
+        }
+    }
+
+    private func addArtworkObserver(_ continuation: AsyncStream<Data?>.Continuation) {
+        let id = UUID()
+        artworkObservers[id] = continuation
+        continuation.onTermination = { [weak self] _ in
+            Task { @MainActor in self?.artworkObservers[id] = nil }
+        }
+    }
+
+    private func addHealthObserver(_ continuation: AsyncStream<NowPlayingSourceHealth>.Continuation)
+    {
+        let id = UUID()
+        healthObservers[id] = continuation
+        continuation.onTermination = { [weak self] _ in
+            Task { @MainActor in self?.healthObservers[id] = nil }
         }
     }
 }
@@ -149,6 +169,20 @@ extension MediaRemoteNowPlayingSource: NowPlayingSource {
         let (stream, continuation) = AsyncStream.makeStream(
             of: NowPlaying?.self, bufferingPolicy: .bufferingNewest(1))
         Task { @MainActor in self.addObserver(continuation) }
+        return stream
+    }
+
+    nonisolated func artworkUpdates() -> AsyncStream<Data?> {
+        let (stream, continuation) = AsyncStream.makeStream(
+            of: Data?.self, bufferingPolicy: .bufferingNewest(1))
+        Task { @MainActor in self.addArtworkObserver(continuation) }
+        return stream
+    }
+
+    nonisolated func healthUpdates() -> AsyncStream<NowPlayingSourceHealth> {
+        let (stream, continuation) = AsyncStream.makeStream(
+            of: NowPlayingSourceHealth.self, bufferingPolicy: .bufferingNewest(1))
+        Task { @MainActor in self.addHealthObserver(continuation) }
         return stream
     }
 
