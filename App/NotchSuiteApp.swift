@@ -32,4 +32,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             HUDSpikeController.startIfEnabled()  // #26 spike; off unless `-HUDSpike YES`
         #endif
     }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        environment?.stop()
+    }
 }

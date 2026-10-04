@@ -73,7 +73,10 @@ SOFTWARE.
 boring.notch
 https://github.com/TheBoredTeam/boring.notch
 Used for: architectural reference (notch window management, gestures, HUD
-replacement, manager/observer pattern). This project's own GPLv3 license
-was chosen for compatibility with boring.notch's license.
+replacement, manager/observer pattern), and adapted code in
+App/Media/MediaRemoteEngine.swift from boringNotch/MediaControllers/
+NowPlayingStreamSupport.swift and Shared/JSONLinesPipeHandler.swift
+(revision 4ba4a92, dev branch; file header notes the changes). This project's
+own GPLv3 license was chosen for compatibility with boring.notch's license.
 License: GPLv3 (see repository root LICENSE for full text)
 ================================================================================
