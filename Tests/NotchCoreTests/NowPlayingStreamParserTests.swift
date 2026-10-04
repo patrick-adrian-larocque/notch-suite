@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import NotchCore
@@ -17,10 +18,13 @@ import Testing
         let result = try parser.ingest(line: envelope(diff: false, song))
         #expect(
             result
-                == NowPlaying(
-                    bundleIdentifier: "com.apple.Music", playing: true, title: "Song",
-                    artist: "Artist"))
-        #expect(parser.nowPlaying == result)
+                == .session(
+                    NowPlaying(
+                        app: AppIdentity(bundleIdentifier: "com.apple.Music"), playing: true,
+                        title: "Song",
+                        artist: "Artist")))
+        #expect(parser.report == result)
+        #expect(parser.nowPlaying == result.nowPlaying)
     }
 
     @Test func fullPayloadReplacesEarlierState() throws {
@@ -29,9 +33,10 @@ import Testing
         let next = #"{"bundleIdentifier":"com.spotify.client","playing":false,"title":"Other"}"#
         let result = try parser.ingest(line: envelope(diff: false, next))
         #expect(
-            result
+            result.nowPlaying
                 == NowPlaying(
-                    bundleIdentifier: "com.spotify.client", playing: false, title: "Other")
+                    app: AppIdentity(bundleIdentifier: "com.spotify.client"), playing: false,
+                    title: "Other")
         )
         #expect(parser.state["artist"] == nil)
     }
@@ -52,9 +57,10 @@ import Testing
         let result = try parser.ingest(
             line: envelope(diff: true, #"{"playing":false,"elapsedTime":42.5}"#))
         #expect(
-            result
+            result.nowPlaying
                 == NowPlaying(
-                    bundleIdentifier: "com.apple.Music", playing: false, title: "Song",
+                    app: AppIdentity(bundleIdentifier: "com.apple.Music"), playing: false,
+                    title: "Song",
                     artist: "Artist", elapsedTime: 42.5))
     }
 
@@ -63,47 +69,54 @@ import Testing
         try parser.ingest(line: envelope(diff: false, song))
         try parser.ingest(line: envelope(diff: true, #"{"album":"First"}"#))
         let result = try parser.ingest(line: envelope(diff: true, #"{"album":"Second"}"#))
-        #expect(result?.album == "Second")
-        #expect(result?.artist == "Artist")
+        #expect(result.nowPlaying?.album == "Second")
+        #expect(result.nowPlaying?.artist == "Artist")
     }
 
     @Test func nullKeyInADiffRemovesThatValue() throws {
         var parser = NowPlayingStreamParser()
         try parser.ingest(line: envelope(diff: false, song))
         let result = try parser.ingest(line: envelope(diff: true, #"{"artist":null}"#))
-        #expect(result?.artist == nil)
-        #expect(result?.title == "Song")
+        #expect(result.nowPlaying?.artist == nil)
+        #expect(result.nowPlaying?.title == "Song")
         #expect(parser.state["artist"] == nil)
     }
 
-    @Test func nullingAMandatoryKeyClearsNowPlaying() throws {
+    /// A diff that removes the title leaves a state that isn't a session but isn't empty
+    /// either: it must not read as "nothing playing".
+    @Test func nullingARequiredKeyIsIncompleteNotNoSession() throws {
         var parser = NowPlayingStreamParser()
         try parser.ingest(line: envelope(diff: false, song))
         let result = try parser.ingest(line: envelope(diff: true, #"{"title":null}"#))
-        #expect(result == nil)
+        #expect(result == .incomplete(missingKeys: ["title"]))
+        #expect(parser.nowPlaying == nil)
     }
 
     @Test func nullingAKeyThatWasNeverSetIsHarmless() throws {
         var parser = NowPlayingStreamParser()
         try parser.ingest(line: envelope(diff: false, song))
         let result = try parser.ingest(line: envelope(diff: true, #"{"genre":null}"#))
-        #expect(result?.title == "Song")
+        #expect(result.nowPlaying?.title == "Song")
     }
 
     @Test func diffBeforeAnyFullStateMergesIntoEmptyState() throws {
         var parser = NowPlayingStreamParser()
         let result = try parser.ingest(line: envelope(diff: true, #"{"title":"Song"}"#))
-        #expect(result == nil)
+        #expect(result == .incomplete(missingKeys: ["playing"]))
         #expect(parser.state["title"] == .string("Song"))
     }
 
     // MARK: Empty and null payloads
 
+    @Test func startsWithNoSession() {
+        #expect(NowPlayingStreamParser().report == .noSession)
+    }
+
     @Test func emptyFullPayloadMeansNothingIsPlaying() throws {
         var parser = NowPlayingStreamParser()
         try parser.ingest(line: envelope(diff: false, song))
         let result = try parser.ingest(line: envelope(diff: false, "{}"))
-        #expect(result == nil)
+        #expect(result == .noSession)
         #expect(parser.state.isEmpty)
     }
 
@@ -120,7 +133,7 @@ import Testing
         #expect(throws: NowPlayingStreamError.self) {
             try parser.ingest(line: envelope(diff: false, "null"))
         }
-        #expect(parser.nowPlaying == before)
+        #expect(parser.report == before)
     }
 
     @Test func missingPayloadIsRejected() {
@@ -138,7 +151,7 @@ import Testing
         #expect(throws: NowPlayingStreamError.malformedJSON) {
             try parser.ingest(line: #"{"type":"data","diff":fal"#)
         }
-        #expect(parser.nowPlaying == before)
+        #expect(parser.report == before)
     }
 
     @Test func plainTextIsMalformedJSON() {
@@ -181,7 +194,7 @@ import Testing
     @Test func toleratesTrailingNewlineAndCRLF() throws {
         var parser = NowPlayingStreamParser()
         let result = try parser.ingest(line: envelope(diff: false, song) + "\r\n")
-        #expect(result?.title == "Song")
+        #expect(result.nowPlaying?.title == "Song")
     }
 
     @Test func keepsUnicodeAndEscapedTitles() throws {
@@ -189,7 +202,7 @@ import Testing
         let payload =
             #"{"bundleIdentifier":"b","playing":true,"title":"夜に駆ける \"Yoru\" é"}"#
         let result = try parser.ingest(line: envelope(diff: false, payload))
-        #expect(result?.title == "夜に駆ける \"Yoru\" é")
+        #expect(result.nowPlaying?.title == "夜に駆ける \"Yoru\" é")
     }
 
     // MARK: Realistic streams
@@ -201,8 +214,8 @@ import Testing
             try parser.ingest(line: "not json")
         }
         let result = try parser.ingest(line: envelope(diff: true, #"{"playing":false}"#))
-        #expect(result?.playing == false)
-        #expect(result?.title == "Song")
+        #expect(result.nowPlaying?.playing == false)
+        #expect(result.nowPlaying?.title == "Song")
     }
 
     @Test func handlesAnArtworkSizedLineAndRemovesItAgain() throws {
@@ -215,7 +228,7 @@ import Testing
         #expect(parser.state["artworkData"]?.stringValue?.count == 1_000_000)
         let result = try parser.ingest(line: envelope(diff: true, #"{"artworkData":null}"#))
         #expect(parser.state["artworkData"] == nil)
-        #expect(result?.title == "Song")
+        #expect(result.nowPlaying?.title == "Song")
     }
 
     @Test func microsKeysAreKeptButDoNotBreakNowPlaying() throws {
@@ -225,8 +238,8 @@ import Testing
             "durationMicros":215000000,"elapsedTimeMicros":1000000}
             """
         let result = try parser.ingest(line: envelope(diff: false, payload))
-        #expect(result?.title == "Song")
-        #expect(result?.duration == nil)
+        #expect(result.nowPlaying?.title == "Song")
+        #expect(result.nowPlaying?.duration == nil)
         #expect(parser.state["durationMicros"] == .number(215_000_000))
     }
 
@@ -246,7 +259,11 @@ import Testing
 
     @Test(
         arguments: [false, true],
-        [#"{"title":5}"#, #"{"playing":"yes"}"#, #"{"bundleIdentifier":1}"#])
+        [
+            #"{"title":5}"#, #"{"playing":"yes"}"#, #"{"bundleIdentifier":1}"#,
+            #"{"processIdentifier":"812"}"#, #"{"processIdentifier":-1}"#,
+            #"{"processIdentifier":1.5}"#,
+        ])
     func wrongTypedMandatoryKeyIsRejectedAndKeepsState(diff: Bool, payload: String) throws {
         var parser = NowPlayingStreamParser()
         try parser.ingest(line: envelope(diff: false, song))
@@ -273,6 +290,89 @@ import Testing
         try parser.ingest(line: envelope(diff: false, song))
         try parser.ingest(line: envelope(diff: true, #"{"title":null}"#))
         #expect(parser.state["title"] == nil)
+    }
+
+    // MARK: App identity
+
+    /// What mediaremote-adapter sends when it can't look up the player's bundle
+    /// identifier, as seen on macOS 27.2.
+    private let pidOnly =
+        #"{"processIdentifier":12043,"playing":true,"title":"Song","artist":"Artist"}"#
+
+    @Test func fullIdentityIsASession() throws {
+        var parser = NowPlayingStreamParser()
+        let payload =
+            #"{"bundleIdentifier":"com.apple.Music","processIdentifier":812,"playing":true,"title":"Song"}"#
+        let result = try parser.ingest(line: envelope(diff: false, payload))
+        #expect(
+            result.nowPlaying?.app
+                == AppIdentity(bundleIdentifier: "com.apple.Music", processIdentifier: 812))
+    }
+
+    @Test func processIdentifierOnlyIsASessionNotNothingPlaying() throws {
+        var parser = NowPlayingStreamParser()
+        let result = try parser.ingest(line: envelope(diff: false, pidOnly))
+        #expect(
+            result
+                == .session(
+                    NowPlaying(
+                        app: AppIdentity(processIdentifier: 12043), playing: true, title: "Song",
+                        artist: "Artist")))
+    }
+
+    @Test func noIdentityIsASessionWithUnknownApp() throws {
+        var parser = NowPlayingStreamParser()
+        let result = try parser.ingest(
+            line: envelope(diff: false, #"{"playing":false,"title":"Song"}"#))
+        #expect(result.nowPlaying?.app == .unknown)
+        #expect(result.nowPlaying?.playing == false)
+    }
+
+    @Test func diffKeepsIdentityItDoesNotMention() throws {
+        var parser = NowPlayingStreamParser()
+        try parser.ingest(line: envelope(diff: false, pidOnly))
+        let result = try parser.ingest(line: envelope(diff: true, #"{"playing":false}"#))
+        #expect(result.nowPlaying?.app == AppIdentity(processIdentifier: 12043))
+        #expect(result.nowPlaying?.playing == false)
+    }
+
+    @Test func diffCanAddTheBundleIdentifierLater() throws {
+        var parser = NowPlayingStreamParser()
+        try parser.ingest(line: envelope(diff: false, pidOnly))
+        let result = try parser.ingest(
+            line: envelope(diff: true, #"{"bundleIdentifier":"com.apple.Music"}"#))
+        #expect(
+            result.nowPlaying?.app
+                == AppIdentity(bundleIdentifier: "com.apple.Music", processIdentifier: 12043))
+    }
+
+    @Test func nullingIdentityKeysKeepsTheSession() throws {
+        var parser = NowPlayingStreamParser()
+        let payload =
+            #"{"bundleIdentifier":"com.apple.Music","processIdentifier":812,"playing":true,"title":"Song"}"#
+        try parser.ingest(line: envelope(diff: false, payload))
+        var result = try parser.ingest(line: envelope(diff: true, #"{"bundleIdentifier":null}"#))
+        #expect(result.nowPlaying?.app == AppIdentity(processIdentifier: 812))
+        result = try parser.ingest(line: envelope(diff: true, #"{"processIdentifier":null}"#))
+        #expect(result.nowPlaying?.app == .unknown)
+        #expect(result.nowPlaying?.title == "Song")
+    }
+
+    @Test func missingRequiredKeysAreListed() throws {
+        var parser = NowPlayingStreamParser()
+        let result = try parser.ingest(
+            line: envelope(diff: false, #"{"processIdentifier":812,"artist":"Artist"}"#))
+        #expect(result == .incomplete(missingKeys: ["playing", "title"]))
+    }
+
+    @Test func artworkDataDecodesBase64AndIgnoresGarbage() throws {
+        var parser = NowPlayingStreamParser()
+        try parser.ingest(
+            line: envelope(
+                diff: false, #"{"playing":true,"title":"Song","artworkData":"QUJD"}"#))
+        #expect(parser.artworkData == Data("ABC".utf8))
+        try parser.ingest(line: envelope(diff: true, #"{"artworkData":"not base64!"}"#))
+        #expect(parser.artworkData == nil)
     }
 
     @Test(arguments: [false, true])

@@ -9,7 +9,8 @@ import Testing
     private let otherImage = Data([0xFF, 0xD8, 0xFF])
 
     private func track(_ title: String = "Song", playing: Bool = true) -> NowPlaying {
-        NowPlaying(bundleIdentifier: "com.apple.Music", playing: playing, title: title)
+        NowPlaying(
+            app: AppIdentity(bundleIdentifier: "com.apple.Music"), playing: playing, title: title)
     }
 
     @Test func nothingPlayingIsMissing() {

@@ -17,8 +17,9 @@ public enum PlaybackState: Sendable, Equatable {
     /// The state after a media source update.
     ///
     /// A non-`nil` update is playing or paused according to its `playing` flag. A `nil`
-    /// update stops playback and keeps whichever track was current (or was already the
-    /// last played) as `lastPlayed`.
+    /// update means the source reports no session (not an incomplete or malformed
+    /// report, which the source must not pass on as `nil`). It stops playback and keeps
+    /// whichever track was current (or was already the last played) as `lastPlayed`.
     public func updated(with nowPlaying: NowPlaying?) -> PlaybackState {
         if let nowPlaying {
             return nowPlaying.playing ? .playing(nowPlaying) : .paused(nowPlaying)
@@ -57,10 +58,14 @@ public enum PlaybackState: Sendable, Equatable {
 extension NowPlaying {
     /// Whether `other` is the same track, ignoring playback position, rate and play state.
     ///
-    /// Compares the player, title, artist and album. Duration is left out because some
-    /// players only report it a moment after the track starts.
+    /// Compares title, artist and album, and the application when that can be decided.
+    /// Identities that disagree on a known part are different applications, so different
+    /// tracks. Identities that can't be compared (for example, both unknown) don't prove
+    /// the same application either; the metadata is then the only evidence and decides
+    /// alone. Duration is left out because some players only report it a moment after
+    /// the track starts.
     public func isSameTrack(as other: NowPlaying) -> Bool {
-        bundleIdentifier == other.bundleIdentifier
+        app.isSameApplication(as: other.app) != false
             && title == other.title
             && artist == other.artist
             && album == other.album
