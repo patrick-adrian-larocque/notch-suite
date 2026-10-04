@@ -159,3 +159,33 @@ final class NowPlayingPresentation {
         }
     }
 }
+
+#if DEBUG
+    extension NowPlayingPresentation {
+        /// A presentation with fixed sample data, for Xcode previews.
+        ///
+        /// Never touches the real media engine or the adapter process: it only sets the
+        /// published properties a preview needs, the same way `apply(_:)` would from a
+        /// real update.
+        static func preview(
+            title: String, artist: String? = nil, album: String? = nil, playing: Bool = true,
+            duration: Double? = 237, elapsedTime: Double? = 65, artwork: ArtworkState = .missing,
+            isEngineDown: Bool = false
+        ) -> NowPlayingPresentation {
+            let nowPlaying = NowPlaying(
+                app: AppIdentity(bundleIdentifier: "com.apple.Music"),
+                playing: playing, title: title, artist: artist, album: album,
+                duration: duration, elapsedTime: elapsedTime, playbackRate: playing ? 1 : 0)
+            let presentation = NowPlayingPresentation(
+                source: MediaRemoteNowPlayingSource(),
+                stateMachine: IslandStateMachine(scheduler: TaskDelayScheduler()),
+                resolver: AppIdentityResolver())
+            presentation.playback = playing ? .playing(nowPlaying) : .paused(nowPlaying)
+            presentation.progress = PlaybackProgress(nowPlaying: nowPlaying, sampledAt: .now)
+            presentation.artwork = artwork
+            presentation.app = AppIdentityResolver().resolve(nowPlaying)
+            presentation.isEngineDown = isEngineDown
+            return presentation
+        }
+    }
+#endif

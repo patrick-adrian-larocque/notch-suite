@@ -288,3 +288,83 @@ private struct TransportControls: View {
         .help(label)
     }
 }
+
+// MARK: - Previews
+
+#if DEBUG
+    extension IslandPalette {
+        fileprivate static let preview = IslandPalette(
+            appearance: IslandAppearance(hasNotch: true, system: .dark, accent: .blue))
+    }
+
+    extension MotionSpec {
+        fileprivate static let preview = MotionSpec(settings: .defaults, systemReduceMotion: false)
+    }
+
+    /// Wraps content in the island's own black canvas, the way the real panel shows it.
+    private func previewCanvas(
+        level: IslandLevel, size: IslandSize, @ViewBuilder content: () -> some View
+    )
+        -> some View
+    {
+        content()
+            .frame(width: size.width, height: size.height)
+            .background(level == .open ? Color.black : Color.black.opacity(0.001))
+            .clipShape(RoundedRectangle(cornerRadius: size.cornerRadius, style: .continuous))
+            .padding(20)
+            .background(Color(white: 0.15))
+    }
+
+    #Preview("Compact") {
+        let size = IslandLayout.design.size(for: .nowPlaying, at: .compact)
+        previewCanvas(level: .compact, size: size) {
+            NowPlayingIslandView(
+                presentation: .preview(title: "Midnight City", artist: "M83"), level: .compact,
+                size: size, notchWidth: IslandLayout.designNotchWidth, palette: .preview,
+                motion: .preview, collapse: {})
+        }
+    }
+
+    #Preview("Peek") {
+        let size = IslandLayout.design.size(for: .nowPlaying, at: .peek)
+        previewCanvas(level: .peek, size: size) {
+            NowPlayingIslandView(
+                presentation: .preview(
+                    title: "A Long Enough Title That It Has To Truncate Somewhere", artist: "M83"),
+                level: .peek, size: size, notchWidth: IslandLayout.designNotchWidth,
+                palette: .preview, motion: .preview, collapse: {})
+        }
+    }
+
+    #Preview("Open") {
+        let size = IslandLayout.design.size(for: .nowPlaying, at: .open)
+        previewCanvas(level: .open, size: size) {
+            NowPlayingIslandView(
+                presentation: .preview(
+                    title: "Midnight City", artist: "M83", album: "Hurry Up, We're Dreaming"),
+                level: .open, size: size, notchWidth: IslandLayout.designNotchWidth,
+                palette: .preview, motion: .preview, collapse: {})
+        }
+    }
+
+    #Preview("Open, paused, artwork loading") {
+        let size = IslandLayout.design.size(for: .nowPlaying, at: .open)
+        previewCanvas(level: .open, size: size) {
+            NowPlayingIslandView(
+                presentation: .preview(
+                    title: "Midnight City", artist: "M83", playing: false, artwork: .loading),
+                level: .open, size: size, notchWidth: IslandLayout.designNotchWidth,
+                palette: .preview, motion: .preview, collapse: {})
+        }
+    }
+
+    #Preview("Open, engine down") {
+        let size = IslandLayout.design.size(for: .nowPlaying, at: .open)
+        previewCanvas(level: .open, size: size) {
+            NowPlayingIslandView(
+                presentation: .preview(title: "Midnight City", artist: "M83", isEngineDown: true),
+                level: .open, size: size, notchWidth: IslandLayout.designNotchWidth,
+                palette: .preview, motion: .preview, collapse: {})
+        }
+    }
+#endif
