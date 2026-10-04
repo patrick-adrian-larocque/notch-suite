@@ -17,7 +17,9 @@ public protocol NowPlayingSource: Sendable {
     ///
     /// Each call returns its own stream, so several observers can listen at once.
     /// The stream yields the current state first, then one value per change. `nil`
-    /// means nothing is playing.
+    /// means no player reports a session (`NowPlayingReport.noSession`). An incomplete
+    /// or malformed report is not `nil`: the source yields nothing for it, so the last
+    /// session stays current.
     func nowPlayingUpdates() -> AsyncStream<NowPlaying?>
 
     /// Sends `command` to the current player.

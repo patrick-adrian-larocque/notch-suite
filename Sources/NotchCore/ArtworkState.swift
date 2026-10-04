@@ -72,11 +72,3 @@ public struct ArtworkTracker: Sendable {
         trackStartedAt.addingTimeInterval(loadingTimeout)
     }
 }
-
-extension NowPlayingStreamParser {
-    /// The current artwork bytes, decoded from the adapter's base64 `artworkData` key.
-    /// `nil` when the key is absent or isn't valid base64.
-    public var artworkData: Data? {
-        state["artworkData"]?.stringValue.flatMap { Data(base64Encoded: $0) }
-    }
-}

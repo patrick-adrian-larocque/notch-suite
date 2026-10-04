@@ -76,7 +76,8 @@ private actor FakeShelfStorage: ShelfStorage {
     }
 
     @Test func nowPlayingSourceStreamsUpdatesAndTakesCommands() async throws {
-        let song = NowPlaying(bundleIdentifier: "com.apple.Music", playing: true, title: "Song")
+        let song = NowPlaying(
+            app: AppIdentity(bundleIdentifier: "com.apple.Music"), playing: true, title: "Song")
         let fake = FakeNowPlayingSource(updates: [song, nil])
         let source: any NowPlayingSource = fake
         var received: [NowPlaying?] = []

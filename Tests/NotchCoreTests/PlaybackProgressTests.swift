@@ -10,7 +10,7 @@ import Testing
         playing: Bool = true, duration: Double? = 180, elapsed: Double? = 60, rate: Double? = 1
     ) -> NowPlaying {
         NowPlaying(
-            bundleIdentifier: "com.apple.Music", playing: playing, title: "Song",
+            app: AppIdentity(bundleIdentifier: "com.apple.Music"), playing: playing, title: "Song",
             duration: duration, elapsedTime: elapsed, playbackRate: rate)
     }
 
