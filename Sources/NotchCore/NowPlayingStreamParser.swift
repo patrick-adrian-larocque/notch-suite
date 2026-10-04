@@ -52,6 +52,12 @@ public struct NowPlayingStreamParser: Sendable {
         report.nowPlaying
     }
 
+    /// The current artwork bytes, decoded from the adapter's base64 `artworkData` key.
+    /// `nil` when the key is absent or isn't valid base64.
+    public var artworkData: Data? {
+        state["artworkData"]?.stringValue.flatMap { Data(base64Encoded: $0) }
+    }
+
     /// Applies one line of stream output and returns the resulting `report`.
     ///
     /// Blank lines are ignored, so a trailing newline or CRLF line ending is safe.
