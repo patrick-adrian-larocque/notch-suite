@@ -28,8 +28,9 @@ seeking, or lyrics. They can come later as separate issues if wanted.
 - R1. Bundle `mediaremote-adapter.pl` in Resources and `MediaRemoteAdapter.framework`
   in Frameworks, pinned to upstream `73f14ab` (the owner fork's HEAD). The framework is
   passed to the script by absolute path, never linked.
-- R2. Run `/usr/bin/perl <script> <framework> stream --no-artwork --debounce=100` as one
-  long-lived child process. Fetch artwork separately (R9) so updates stay small.
+- R2. Run `/usr/bin/perl <script> <framework> stream --debounce=100` as one long-lived
+  child process. Artwork is included in the stream rather than fetched separately:
+  with diffs on, the adapter sends it once per track, not with every update.
 - R3. Treat "engine failed" separately from "nothing playing". A failed engine must not
   show as an empty island; show nothing and log it, and retry with backoff.
 - R4. Stop the child on quit and on sleep, restart on wake. No orphaned perl processes.
@@ -65,7 +66,7 @@ seeking, or lyrics. They can come later as separate issues if wanted.
 | A1 | Music and Spotify playback updates the island within 1 s | manual, Debug build |
 | A2 | prev/play/pause/next reach the player | manual |
 | A3 | Slow or missing artwork shows the fallback | manual plus `ArtworkState` tests |
-| A4 | Engine missing or killed: no fake "nothing playing", recovers | unit test with a fake process plus manual `kill` |
+| A4 | Engine missing or killed: no fake "nothing playing", recovers | `NowPlayingPresentationTests.engineHealthDrivesIsEngineDown` (`NotchSuiteTests`, over a fake `NowPlayingSource`) plus manual `kill` against the real adapter |
 | A5 | Split lines, CRLF, diffs, player gone | parser tests (exist) plus line-buffer tests |
 | A6 | Quit and sleep leave no `perl` child | `pgrep -f mediaremote-adapter` |
 | A7 | Licenses complete | `license-auditor` agent |

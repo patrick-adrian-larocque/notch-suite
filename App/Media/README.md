@@ -15,10 +15,27 @@ branch. Architecture background: `docs/architecture-review.md`.
 | `AppEnvironment` | `App/AppEnvironment.swift` | Done. Owns app-level objects; the media source goes here. |
 | mediaremote-adapter | `Vendor/mediaremote-adapter/` | Bundled, unmodified, pinned to `73f14ab`. |
 | `MediaRemoteEngine` | `MediaRemoteEngine.swift` | Done. Adapted from boring.notch: runs `stream`, splits lines, restarts with backoff, runs `send`. |
-| `MediaRemoteNowPlayingSource` | `MediaRemoteNowPlayingSource.swift` | Done. Applies the contract below; started and stopped by `AppEnvironment`. |
-| `NowPlayingPresentation` and views | `NowPlayingPresentation.swift` | TODO comments only. |
+| `MediaRemoteNowPlayingSource` | `MediaRemoteNowPlayingSource.swift` | Done. Applies the contract below; started and stopped by `AppEnvironment`. Implements `NowPlayingSource`'s `artworkUpdates()` and `healthUpdates()` streams as well as `nowPlayingUpdates()`. |
+| `NowPlayingPresentation` | `NowPlayingPresentation.swift` | Done. Depends on `any NowPlayingSource`, not the concrete type, so tests can drive it with a fake. |
+| Compact, peek and open views | `NowPlayingIslandView.swift` | Done: artwork, eq bars, title, progress, transport controls, an engine-down subtitle. `#Preview`s with sample data cover all three levels. |
 
-The source runs from launch, but nothing draws it yet: the island still shows idle.
+The source runs from launch and the island now shows it: a session moves the island
+into `.nowPlaying` and back to idle when it ends. Not yet done: sleep/wake handling and
+a hands-on check with Music and Spotify (see "Next steps").
+
+## Testing
+
+- **Previews**: `NowPlayingIslandView.swift` has `#Preview`s for compact, peek, open,
+  open while paused with artwork loading, and open with the engine down. They use
+  `NowPlayingPresentation.preview(...)`, a `DEBUG`-only factory in
+  `NowPlayingPresentation.swift` that sets sample state directly and never touches the
+  real adapter process. Open the file in Xcode and use the canvas (⌥⌘↩).
+- **Unit tests**: the `NotchSuiteTests` target (`AppTests/`, macOS-only, not part of the
+  `swift test` package) exercises `NowPlayingPresentation` over `FakeNowPlayingSource`
+  (`AppTests/Media/FakeNowPlayingSource.swift`), a lock-backed fake conforming to
+  `NowPlayingSource`. Covers a session starting and ending, artwork arriving after the
+  track, engine health flipping `isEngineDown`, and a failed command setting
+  `lastCommandError`. Run it from the `NotchSuiteTests` scheme in Xcode.
 
 ## The media contract
 
@@ -48,8 +65,13 @@ mediaremote-adapter (perl child)       MediaRemoteEngine            [App]
                                        PlaybackProgress, ArtworkTracker
                                        AppIdentityResolver.resolve(app) when app changes
   -> IslandStateMachine.selectMode(.nowPlaying)                     [NotchCore]
-  -> IslandView, Now Playing views                                  [TODO, App]
+  -> IslandView, NowPlayingIslandView                                [App]
 ```
+
+`NowPlayingPresentation` depends on `any NowPlayingSource` (the `NotchCore` protocol),
+not the concrete `MediaRemoteNowPlayingSource`, and reaches artwork and engine health
+through that protocol's `artworkUpdates()` and `healthUpdates()` streams rather than
+closures on the concrete type. That's what lets `NotchSuiteTests` drive it with a fake.
 
 `AppEnvironment` creates and starts the source and the presentation model, gives the
 presentation model the `stateMachine` and `appIdentityResolver`, and stops the engine
@@ -57,10 +79,8 @@ on termination. Nothing else creates media objects.
 
 ## Next steps, in order
 
-1. `NowPlayingPresentation` and compact, peek and open views.
-2. Show `MediaRemoteEngine.Status.failed` and `.unavailable` instead of an idle island.
-3. Stop the adapter on sleep and start it on wake.
-4. Hands-on check with Music and Spotify.
+1. Stop the adapter on sleep and start it on wake.
+2. Hands-on check with Music and Spotify (checked live only against a test player so far).
 
 ## Checking it live
 
