@@ -5,14 +5,17 @@ import SwiftUI
 /// Owns the notch panel: places it on the notch, feeds the pointer into the island's
 /// state machine, and keeps the panel's mouse handling to the island's area.
 ///
+/// It receives the island model and providers from `AppEnvironment` and creates only
+/// its window and hosting view.
+///
 /// The panel is a fixed canvas big enough for the largest island plus its shadow,
 /// centred on the notch at the top edge. The island morphs inside it, so the window never
 /// resizes. The mouse only reaches the panel while the pointer is inside the island's
 /// hit rect; everywhere else, clicks fall through to the menu bar and apps below.
 @MainActor
 final class NotchPanelController: NSObject {
-    private let geometryProvider = ScreenNotchGeometryProvider()
-    private let reduceMotionProvider = WorkspaceReduceMotionProvider()
+    private let geometryProvider: ScreenNotchGeometryProvider
+    private let reduceMotionProvider: any ReduceMotionProvider
     private let panel = NotchPanel()
     private let model: IslandModel
     private let hostingView: IslandHostingView
@@ -21,12 +24,14 @@ final class NotchPanelController: NSObject {
     private var mouseMonitors: [Any] = []
     private var reduceMotionTask: Task<Void, Never>?
 
-    override init() {
-        let machine = IslandStateMachine(scheduler: TaskDelayScheduler())
-        let geometry =
-            geometryProvider.geometry()
-            ?? NotchGeometry(metrics: ScreenMetrics(screenWidth: 0, topInset: 0))
-        model = IslandModel(stateMachine: machine, geometry: geometry)
+    init(
+        model: IslandModel,
+        geometryProvider: ScreenNotchGeometryProvider,
+        reduceMotionProvider: any ReduceMotionProvider
+    ) {
+        self.model = model
+        self.geometryProvider = geometryProvider
+        self.reduceMotionProvider = reduceMotionProvider
         hostingView = IslandHostingView(rootView: IslandView(model: model))
         super.init()
 
