@@ -1,16 +1,217 @@
-// Integration scaffold only: media presentation is not connected to the island yet.
-// Follow-up: #24; coordinate with the existing island shell PR #44 / issue #23.
-//
-// TODO(#24): Own a single source observation task in the app's media presentation
-// model. Bind updates to the existing PlaybackState, PlaybackProgress, and artwork
-// models; cancel observation and stale artwork work when the source/player changes.
-// TODO(#24): Adapt suitable media UI integration from the owner's boring.notch fork
-// after inspection, preserving original notices whenever implementation code is reused.
-// TODO(#24): Supply compact/peek/open player views to the shell after #44 lands;
-// avoid replacing or duplicating that PR's hover/click handling and panel geometry.
-// TODO(#24): Load artwork off the main actor with loading/missing/error fallbacks;
-// ensure late results cannot overwrite newer tracks. Handle paused progress correctly.
-// TODO(#24): Route prev/play/next actions through NowPlayingSource.send; expose
-// unavailable/failed controls accessibly instead of silently ignoring button presses.
-// TODO(#24): Verify Music/Spotify, player switching, long titles, artwork failure,
-// pause/resume, sleep/wake, reduce motion, and VoiceOver with hands-on testing.
+import AppKit
+import NotchCore
+import Observation
+
+/// What the Now Playing views read, kept current from `MediaRemoteNowPlayingSource`.
+///
+/// It turns source updates into `PlaybackState`, a `PlaybackProgress` sample, an
+/// `ArtworkState` and the player's resolved name and icon, and moves the island into
+/// and out of `.nowPlaying`:
+/// - A session starts (playing or paused) while the island is idle: show Now Playing.
+/// - The session ends while Now Playing shows: back to idle.
+/// Other modes (an alert, a timer) are left alone.
+@MainActor
+@Observable
+final class NowPlayingPresentation {
+    /// Playing, paused, or stopped with the last track.
+    private(set) var playback: PlaybackState = .idle
+    /// The last progress sample, or `nil` when the source reports no elapsed time.
+    private(set) var progress: PlaybackProgress?
+    /// What to show in the artwork slot.
+    private(set) var artwork: ArtworkState = .missing
+    /// The artwork as an image, decoded off the main actor. `nil` until it arrives.
+    private(set) var artworkImage: NSImage?
+    /// The player's name and icon, or `nil` when there is no session.
+    private(set) var app: ResolvedAppIdentity?
+    /// Whether the engine is down, so the view can say so instead of looking idle.
+    private(set) var isEngineDown = false
+    /// The last command that couldn't be delivered, for accessibility announcements.
+    private(set) var lastCommandError: String?
+
+    /// The track to show: the current one, or `nil` when stopped.
+    var nowPlaying: NowPlaying? { playback.nowPlaying }
+
+    @ObservationIgnored private let source: any NowPlayingSource
+    @ObservationIgnored private let stateMachine: IslandStateMachine
+    @ObservationIgnored private let resolver: AppIdentityResolver
+    @ObservationIgnored private var tracker = ArtworkTracker()
+    @ObservationIgnored private var artworkBytes: Data?
+    @ObservationIgnored private var updatesTask: Task<Void, Never>?
+    @ObservationIgnored private var artworkTask: Task<Void, Never>?
+    @ObservationIgnored private var healthTask: Task<Void, Never>?
+    @ObservationIgnored private var artworkDeadlineTask: Task<Void, Never>?
+    @ObservationIgnored private var decodeTask: Task<Void, Never>?
+
+    init(
+        source: any NowPlayingSource, stateMachine: IslandStateMachine,
+        resolver: AppIdentityResolver
+    ) {
+        self.source = source
+        self.stateMachine = stateMachine
+        self.resolver = resolver
+    }
+
+    /// Starts following the source. Call once, after the source starts.
+    func start() {
+        let updates = source.nowPlayingUpdates()
+        updatesTask = Task { [weak self] in
+            for await update in updates {
+                self?.apply(update)
+            }
+        }
+        let artworkUpdates = source.artworkUpdates()
+        artworkTask = Task { [weak self] in
+            for await data in artworkUpdates {
+                self?.artworkChanged(data)
+            }
+        }
+        let healthUpdates = source.healthUpdates()
+        healthTask = Task { [weak self] in
+            for await health in healthUpdates {
+                self?.isEngineDown = health == .down
+            }
+        }
+    }
+
+    func stop() {
+        updatesTask?.cancel()
+        artworkTask?.cancel()
+        healthTask?.cancel()
+        artworkDeadlineTask?.cancel()
+        decodeTask?.cancel()
+    }
+
+    // MARK: Commands
+
+    func togglePlayPause() { send(.togglePlayPause) }
+    func nextTrack() { send(.nextTrack) }
+    func previousTrack() { send(.previousTrack) }
+
+    private func send(_ command: MediaCommand) {
+        Task {
+            do {
+                try await source.send(command)
+                lastCommandError = nil
+            } catch {
+                lastCommandError = "Couldn't reach the player"
+                announce("Couldn't reach the player")
+                mediaRemoteLog.error(
+                    "command \(String(describing: command), privacy: .public) failed: \(String(describing: error), privacy: .public)"
+                )
+            }
+        }
+    }
+
+    /// Tells a VoiceOver user that a control couldn't act (R11); sighted users see nothing change.
+    private func announce(_ message: String) {
+        guard NSWorkspace.shared.isVoiceOverEnabled else { return }
+        NSAccessibility.post(
+            element: NSApp as Any, notification: .announcementRequested,
+            userInfo: [
+                .announcement: message,
+                .priority: NSAccessibilityPriorityLevel.high.rawValue,
+            ])
+    }
+
+    // MARK: Updates
+
+    private func apply(_ update: NowPlaying?) {
+        let previous = playback.nowPlaying
+        playback = playback.updated(with: update)
+        progress = update.flatMap { PlaybackProgress(nowPlaying: $0, sampledAt: .now) }
+        if let update {
+            if previous.map({ !$0.isSameTrack(as: update) }) ?? true
+                || previous?.app != update.app
+                || previous?.parentApplicationBundleIdentifier
+                    != update.parentApplicationBundleIdentifier
+            {
+                app = resolver.resolve(update)
+            }
+        } else {
+            app = nil
+        }
+        refreshArtwork()
+        followSession(started: previous == nil && update != nil, ended: update == nil)
+    }
+
+    private func artworkChanged(_ data: Data?) {
+        artworkBytes = data
+        refreshArtwork()
+    }
+
+    /// Feeds the tracker and decodes new artwork, then schedules the next re-read while
+    /// the artwork is still loading.
+    private func refreshArtwork() {
+        tracker.update(nowPlaying: playback.nowPlaying, artwork: artworkBytes, at: .now)
+        let state = tracker.state(at: .now)
+        if state != artwork {
+            artwork = state
+            decodeArtwork(state)
+        }
+        artworkDeadlineTask?.cancel()
+        // `loadingDeadline` stays set after it passes; only wait while still loading, or
+        // every refresh would schedule another zero-delay one.
+        if state == .loading, let deadline = tracker.loadingDeadline {
+            artworkDeadlineTask = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(max(0, deadline.timeIntervalSinceNow)))
+                guard !Task.isCancelled else { return }
+                self?.refreshArtwork()
+            }
+        }
+    }
+
+    /// Decodes artwork off the main actor; a result for older bytes is dropped.
+    private func decodeArtwork(_ state: ArtworkState) {
+        decodeTask?.cancel()
+        guard case .loaded(let data) = state else {
+            artworkImage = nil
+            return
+        }
+        decodeTask = Task { [weak self] in
+            let image = await Task.detached(priority: .userInitiated) { NSImage(data: data) }
+                .value
+            guard !Task.isCancelled, let self, self.artwork == .loaded(data) else { return }
+            self.artworkImage = image
+        }
+    }
+
+    /// Shows Now Playing when a session starts on an idle island, and goes back to idle
+    /// when the session ends while Now Playing shows.
+    private func followSession(started: Bool, ended: Bool) {
+        if started, stateMachine.mode == .idle {
+            stateMachine.selectMode(.nowPlaying)
+        } else if ended, stateMachine.mode == .nowPlaying {
+            stateMachine.selectMode(.idle)
+        }
+    }
+}
+
+#if DEBUG
+    extension NowPlayingPresentation {
+        /// A presentation with fixed sample data, for Xcode previews.
+        ///
+        /// Never touches the real media engine or the adapter process: it only sets the
+        /// published properties a preview needs, the same way `apply(_:)` would from a
+        /// real update.
+        static func preview(
+            title: String, artist: String? = nil, album: String? = nil, playing: Bool = true,
+            duration: Double? = 237, elapsedTime: Double? = 65, artwork: ArtworkState = .missing,
+            isEngineDown: Bool = false
+        ) -> NowPlayingPresentation {
+            let nowPlaying = NowPlaying(
+                app: AppIdentity(bundleIdentifier: "com.apple.Music"),
+                playing: playing, title: title, artist: artist, album: album,
+                duration: duration, elapsedTime: elapsedTime, playbackRate: playing ? 1 : 0)
+            let presentation = NowPlayingPresentation(
+                source: MediaRemoteNowPlayingSource(),
+                stateMachine: IslandStateMachine(scheduler: TaskDelayScheduler()),
+                resolver: AppIdentityResolver())
+            presentation.playback = playing ? .playing(nowPlaying) : .paused(nowPlaying)
+            presentation.progress = PlaybackProgress(nowPlaying: nowPlaying, sampledAt: .now)
+            presentation.artwork = artwork
+            presentation.app = AppIdentityResolver().resolve(nowPlaying)
+            presentation.isEngineDown = isEngineDown
+            return presentation
+        }
+    }
+#endif

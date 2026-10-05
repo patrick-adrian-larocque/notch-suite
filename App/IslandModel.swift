@@ -17,14 +17,20 @@ final class IslandModel {
     static let shadowMargin = (sides: 24.0, bottom: 44.0)
 
     let stateMachine: IslandStateMachine
+    /// What is playing, for the Now Playing views. `nil` in previews without media.
+    let nowPlaying: NowPlayingPresentation?
     /// The notch on the island's screen, measured or virtual.
     var geometry: NotchGeometry
     /// The system reduce-motion setting.
     var systemReduceMotion = false
 
-    init(stateMachine: IslandStateMachine, geometry: NotchGeometry) {
+    init(
+        stateMachine: IslandStateMachine, geometry: NotchGeometry,
+        nowPlaying: NowPlayingPresentation? = nil
+    ) {
         self.stateMachine = stateMachine
         self.geometry = geometry
+        self.nowPlaying = nowPlaying
     }
 
     var layout: IslandLayout { IslandLayout(geometry: geometry) }

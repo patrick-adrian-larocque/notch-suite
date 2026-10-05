@@ -21,19 +21,25 @@ struct NotchSuiteApp: App {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private var panelController: NotchPanelController?
-
-    // TODO(#24): Own the real media source/presentation model from App/Media here.
-    // Start it once after launch and stop processes/observation on termination.
-    // Inject its state into the island shell after #23 / PR #44 lands.
-    // Keep startup failures visible separately from a valid "nothing playing" state.
+    /// The app's object graph, created once at launch.
+    private var environment: AppEnvironment?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        let controller = NotchPanelController()
-        controller.show()
-        panelController = controller
+        // `NotchSuiteTests` is hosted by this app. Its tests build their own objects, and
+        // the test runner ends the host without `applicationWillTerminate`, which would
+        // orphan the adapter process this environment starts.
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else {
+            return
+        }
+        let environment = AppEnvironment()
+        environment.start()
+        self.environment = environment
         #if DEBUG
             HUDSpikeController.startIfEnabled()  // #26 spike; off unless `-HUDSpike YES`
         #endif
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        environment?.stop()
     }
 }

@@ -5,7 +5,9 @@ code from, or was directly derived from. This project's own license
 ================================================================================
 mediaremote-adapter
 https://github.com/ungive/mediaremote-adapter
-Used for: Now Playing media detection and playback control.
+Used for: Now Playing media detection and playback control. The script and a
+build of the framework are bundled unmodified from revision 73f14ab; see
+Vendor/mediaremote-adapter/README.md.
 License: BSD 3-Clause
 ================================================================================
 
@@ -71,7 +73,10 @@ SOFTWARE.
 boring.notch
 https://github.com/TheBoredTeam/boring.notch
 Used for: architectural reference (notch window management, gestures, HUD
-replacement, manager/observer pattern). This project's own GPLv3 license
-was chosen for compatibility with boring.notch's license.
+replacement, manager/observer pattern), and adapted code in
+App/Media/MediaRemoteEngine.swift from boringNotch/MediaControllers/
+NowPlayingStreamSupport.swift and Shared/JSONLinesPipeHandler.swift
+(revision 4ba4a92, dev branch; file header notes the changes). This project's
+own GPLv3 license was chosen for compatibility with boring.notch's license.
 License: GPLv3 (see repository root LICENSE for full text)
 ================================================================================

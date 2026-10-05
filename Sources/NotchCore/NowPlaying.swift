@@ -1,9 +1,12 @@
-/// What is playing right now, as reported by mediaremote-adapter.
+/// What a media player is playing right now.
 ///
-/// `bundleIdentifier`, `playing` and `title` are the adapter's mandatory keys.
-/// Everything else is optional because players report them unevenly.
+/// `playing` and `title` define a session. The application's identity is optional,
+/// because the media source can't always name the player; see `AppIdentity`. Everything
+/// else is optional too, because players report it unevenly.
 public struct NowPlaying: Sendable, Equatable {
-    public var bundleIdentifier: String
+    /// The application playing, as far as the media source could tell.
+    public var app: AppIdentity
+    /// The application that owns the player, such as a browser for a web player.
     public var parentApplicationBundleIdentifier: String?
     public var playing: Bool
     public var title: String
@@ -16,7 +19,7 @@ public struct NowPlaying: Sendable, Equatable {
     public var playbackRate: Double?
 
     public init(
-        bundleIdentifier: String,
+        app: AppIdentity = .unknown,
         parentApplicationBundleIdentifier: String? = nil,
         playing: Bool,
         title: String,
@@ -26,7 +29,7 @@ public struct NowPlaying: Sendable, Equatable {
         elapsedTime: Double? = nil,
         playbackRate: Double? = nil
     ) {
-        self.bundleIdentifier = bundleIdentifier
+        self.app = app
         self.parentApplicationBundleIdentifier = parentApplicationBundleIdentifier
         self.playing = playing
         self.title = title
@@ -39,22 +42,30 @@ public struct NowPlaying: Sendable, Equatable {
 }
 
 extension NowPlaying {
+    /// The keys a state must hold for it to describe a session.
+    ///
+    /// mediaremote-adapter also requires `processIdentifier`, but identity is optional
+    /// here: a session is shown and controlled the same way without it, because commands
+    /// always go to the system's current player.
+    static let requiredKeys = ["playing", "title"]
+
     /// Reads a `NowPlaying` out of the adapter's raw key/value state.
     ///
-    /// Returns `nil` when a mandatory key is missing or has the wrong type, which
-    /// is how "nothing is playing" looks. An optional key with the wrong type is
-    /// treated as absent rather than failing the whole state. (The stream parser is
-    /// stricter: it rejects a line that gives a mandatory key the wrong type.)
+    /// Returns `nil` when `playing` or `title` is missing or has the wrong type. Callers
+    /// tell an empty state ("no session") apart from an incomplete one; see
+    /// `NowPlayingReport`. An optional key with the wrong type is treated as absent, and
+    /// so is a `processIdentifier` that isn't a positive whole number in range.
     init?(state: [String: JSONValue]) {
         guard
-            let bundleIdentifier = state["bundleIdentifier"]?.stringValue,
             let playing = state["playing"]?.boolValue,
             let title = state["title"]?.stringValue
         else {
             return nil
         }
         self.init(
-            bundleIdentifier: bundleIdentifier,
+            app: AppIdentity(
+                bundleIdentifier: state["bundleIdentifier"]?.stringValue,
+                processIdentifier: state["processIdentifier"].flatMap(Self.processIdentifier)),
             parentApplicationBundleIdentifier: state["parentApplicationBundleIdentifier"]?
                 .stringValue,
             playing: playing,
@@ -65,5 +76,15 @@ extension NowPlaying {
             elapsedTime: state["elapsedTime"]?.numberValue,
             playbackRate: state["playbackRate"]?.numberValue
         )
+    }
+
+    /// `value` as a process identifier: a whole number from 1 through `Int32.max`.
+    static func processIdentifier(_ value: JSONValue) -> Int32? {
+        guard let number = value.numberValue, number >= 1, number <= Double(Int32.max),
+            number.rounded(.towardZero) == number
+        else {
+            return nil
+        }
+        return Int32(number)
     }
 }
