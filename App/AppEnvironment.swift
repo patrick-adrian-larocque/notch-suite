@@ -97,8 +97,8 @@ final class AppEnvironment {
             let resolver = appIdentityResolver
             Task { @MainActor in
                 var sentPause = false
-                for await nowPlaying in updates {
-                    guard let nowPlaying else {
+                for await snapshot in updates {
+                    guard let nowPlaying = snapshot?.nowPlaying else {
                         mediaRemoteLog.notice("probe: update nil (no session)")
                         continue
                     }
