@@ -97,6 +97,7 @@ Follow `/port-from-reference` whenever code from them is copied or closely follo
 
 ## Where the details live
 
+- `docs/engineering-rules.md`: before any non-trivial investigation, proposal, or implementation, read it and apply the relevant sections (reuse order, exact-version research, environment checks, lifecycle and evidence-labeling rules).
 - `.claude/rules/swift-core.md`: rules for `Sources/NotchCore` and its tests (loads only when those files are touched).
 - `.claude/rules/ci.md`: rules for `.github/workflows` (loads only when those files are touched).
 - `.claude/rules/code-search.md`, `.claude/rules/reading-files.md`: how to search and read files.

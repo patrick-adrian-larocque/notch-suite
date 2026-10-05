@@ -12,6 +12,10 @@
 - The owner's forks of mediaremote-adapter, boring.notch, and notchdrop are available to integrate and adapt. Inspect the relevant implementation before proposing a replacement; preserve the project's core/app boundary and required attribution.
 - Report the distinction between available implementation sources and features already connected in the app. An unwired placeholder does not imply that the underlying implementation is unavailable.
 
+## Engineering rules
+
+- Before any non-trivial investigation, proposal, or implementation, read [docs/engineering-rules.md](docs/engineering-rules.md) and apply the relevant sections. It sets the reuse order, exact-version research, environment checks, lifecycle claims, and evidence labels (OBSERVED LOCAL FACT, UPSTREAM FACT, INFERENCE, UNVERIFIED).
+
 ## Workspace commands
 
 - Read `docs/workspace.md` for editor, Codex, and worktree setup.
