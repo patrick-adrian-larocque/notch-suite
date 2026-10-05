@@ -35,6 +35,7 @@ swift format lint --strict --recursive Sources Tests App
   ```
 
   Then open `NotchSuite.xcodeproj` and run the `NotchSuite` scheme, or open `build/DerivedData/Build/Products/Debug/NotchSuite.app`. It has no Dock icon; quit it from its status item. The project signs ad hoc ("Sign to Run Locally"); CI adds `CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` to build without signing.
+- `project.yml` owns the Xcode project's structure; `NotchSuite.xcodeproj` is generated output. The Xcode MCP server (`xcode-tools`) is for inspecting, building, testing and diagnosing it; its runtime and debug tools ask first. Its currently audited structural tools (new targets, build settings, entitlements, Info.plist keys, file moves) are denied for Claude, and the list must be re-audited after Xcode upgrades, because regenerating discards what they do. Edit `project.yml` instead. See `docs/xcode-mcp.md`.
 - `.swift-version` pins swiftly's toolchain for this folder and is gitignored. CI uses Xcode's Swift on macOS and the `swift:6.4-noble` image on Linux.
 
 ## Existing implementation sources
