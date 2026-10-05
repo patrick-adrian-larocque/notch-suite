@@ -68,11 +68,6 @@ import Testing
         let (source, _) = makeSource()
         let old = Data([1, 2, 3])
         let new = Data([4, 5, 6])
-        func full(_ title: String, artwork: Data? = nil) -> String {
-            let art = artwork.map { #","artworkData":"\#($0.base64EncodedString())""# } ?? ""
-            return
-                #"{"type":"data","diff":false,"payload":{"playing":true,"title":"\#(title)","processIdentifier":1\#(art)}}"#
-        }
 
         source.ingest(full("A", artwork: old))
         #expect(source.artwork == old)
@@ -85,6 +80,49 @@ import Testing
             #"{"type":"data","diff":true,"payload":{"artworkData":"\#(new.base64EncodedString())"}}"#
         )
         #expect(source.artwork == new)
+    }
+
+    /// A full payload as the adapter sends it, optionally with a cover.
+    private func full(_ title: String, artwork: Data? = nil) -> String {
+        let art = artwork.map { #","artworkData":"\#($0.base64EncodedString())""# } ?? ""
+        return
+            #"{"type":"data","diff":false,"payload":{"playing":true,"title":"\#(title)","processIdentifier":1\#(art)}}"#
+    }
+
+    /// The artwork and session streams are consumed by separate tasks, so the order in which
+    /// the presentation sees "cover cleared" and "new track" is not guaranteed by the types.
+    /// This drives the real source into the real presentation through many cover-to-artless
+    /// transitions and checks the old cover never survives on the new track.
+    @Test func aTrackChangeWithoutArtworkNeverKeepsThePreviousCover() async {
+        let (source, _) = makeSource()
+        let presentation = NowPlayingPresentation(
+            source: source, stateMachine: IslandStateMachine(scheduler: TaskDelayScheduler()),
+            resolver: AppIdentityResolver())
+        presentation.start()
+        await settle(.milliseconds(100))  // the streams register on the main actor
+        let cover = Data([1, 2, 3, 4])
+        var stale = 0
+
+        for round in 0..<60 {
+            source.ingest(full("A\(round)", artwork: cover))
+            for _ in 0..<50 where presentation.artwork != .loaded(cover) {
+                await settle(.milliseconds(2))
+            }
+            source.ingest(full("B\(round)"))  // new track, cover cleared, no new cover
+            for _ in 0..<50 where presentation.nowPlaying?.title != "B\(round)" {
+                await settle(.milliseconds(2))
+            }
+            await settle(.milliseconds(5))
+            if presentation.artwork == .loaded(cover) {
+                // Wait for any in-flight "cover cleared" event: only a cover still there
+                // afterwards is stuck on the new track.
+                await settle(.milliseconds(150))
+                if presentation.artwork == .loaded(cover) { stale += 1 }
+            }
+        }
+
+        #expect(stale == 0, "old cover stayed on the new track in \(stale) of 60 transitions")
+        presentation.stop()
     }
 
     @Test func stopFinishesArtworkAndHealthObserversToo() async {
