@@ -21,8 +21,8 @@ branch. Architecture background: `docs/architecture-review.md`.
 
 The source runs from launch and the island now shows it: a session moves the island
 into `.nowPlaying` and back to idle when it ends. Sleep/wake is handled in
-`AppEnvironment` (stop on `willSleep`, restart on `didWake`; built, not yet checked on a
-real sleep). Not yet done: a hands-on check with Music and Spotify (see "Next steps").
+`AppEnvironment` (stop on `willSleep`, restart on `didWake`). Both have been checked live
+(see "Live checks and what's left").
 
 ## Testing
 
@@ -81,19 +81,18 @@ closures on the concrete type. That's what lets `NotchSuiteTests` drive it with 
 presentation model the `stateMachine` and `appIdentityResolver`, and stops the engine
 on termination. Nothing else creates media objects.
 
-## Next steps, in order
+## Live checks and what's left
 
-1. Confirm on a real sleep/wake that `pgrep -fl mediaremote-adapter` is empty while asleep and returns on wake.
-2. Hands-on check with Music and Spotify (checked live only against a test player so far):
-   a valid session, identity resolved as far as the bundle ID or process ID allows (an absent
-   bundle ID is fine), a UI that works either way, and working updates and transport controls.
+Checked live on macOS 27.2 (2026-10-04): Music and Spotify updates, transport controls,
+long-title truncation, and two real sleep/wake cycles (one adapter before, none during
+`willSleep`, a new single adapter after wake, same app process, updates resumed).
+
+Not yet checked live: eq bars when paused or with reduce motion, long titles at the compact
+level, and a force-quit or crash of the app, which orphans the adapter (only a normal quit
+stops it).
 
 Design choice, not a requirement: `suspend()` goes through `MediaRemoteEngine.stop()`, which
 resets the retry backoff, so a wake starts a new operating period at the initial 1 s delay.
-
-Test gap: `MediaRemoteSleepWakeTests` covers process lifecycle and observer streams with a stub
-script. It does not cover an update reaching the same observer after `resume()`, because under
-the test host the engine delivered no stdout lines even for a trivial script (cause not found).
 
 ## Checking it live
 

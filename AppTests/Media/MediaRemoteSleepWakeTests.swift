@@ -6,12 +6,8 @@ import Testing
 
 /// `suspend()`/`resume()` over the real `MediaRemoteEngine`, pointed at a stub script
 /// instead of mediaremote-adapter. The stub is launched the same way (`perl <script>
-/// <framework> stream ...`) and just sleeps, so these tests cover the process lifecycle
-/// and observer streams only.
-///
-/// Not covered: a later media update reaching the same observer after `resume()`. Under
-/// this test host the engine delivered no stdout lines even for a trivial script (cause
-/// not found), so that path is only checked by hand; see `App/Media/README.md`.
+/// <framework> stream ...`). Most tests use a stub that just sleeps, covering the process
+/// lifecycle and observer streams; one uses a stub that reports a session on each launch.
 ///
 /// Fixed sleeps rather than polling: running `pgrep` synchronously in a polling loop on
 /// the main actor kept the observer's stream from finishing.
@@ -23,10 +19,10 @@ import Testing
         let script: URL
     }
 
-    private func makeRig() throws -> Rig {
+    private func makeRig(script body: String = "sleep 60;\n") throws -> Rig {
         let script = FileManager.default.temporaryDirectory
             .appending(path: "stub-adapter-\(UUID().uuidString).pl")
-        try "sleep 60;\n".write(to: script, atomically: true, encoding: .utf8)
+        try body.write(to: script, atomically: true, encoding: .utf8)
         let engine = MediaRemoteEngine(resources: .init(scriptURL: script, frameworkURL: script))
         return Rig(
             source: MediaRemoteNowPlayingSource(engine: engine), engine: engine, script: script)
@@ -88,6 +84,48 @@ import Testing
         await settle()
         #expect(observer.finished)
         #expect(processCount(rig.script) == 0)
+    }
+
+    @Test func anUpdateAfterResumeReachesTheSameObserver() async throws {
+        // Each launch reports a session titled with its own pid, so a restart is visible.
+        let rig = try makeRig(
+            script: #"""
+                $| = 1;
+                print qq~{"type":"data","diff":false,"payload":{"playing":true,"title":"T$$","processIdentifier":1}}\n~;
+                sleep 60;
+                """#)
+        defer { try? FileManager.default.removeItem(at: rig.script) }
+        let titles = TitleLog()
+        let updates = rig.source.nowPlayingUpdates()
+        Task { @MainActor in
+            for await update in updates { if let update { titles.values.append(update.title) } }
+            titles.finished = true
+        }
+        rig.source.start()
+        await waitForTitles(titles, count: 1)
+
+        rig.source.suspend()
+        await settle()
+        rig.source.resume()
+        await waitForTitles(titles, count: 2)
+
+        #expect(titles.values.count == 2)
+        #expect(titles.values.first != titles.values.last)  // a new launch has a new pid
+        #expect(!titles.finished)
+        rig.source.stop()
+    }
+
+    private final class TitleLog {
+        var values: [String] = []
+        var finished = false
+    }
+
+    /// Waits up to five seconds for `count` titles, polling with sleeps only.
+    private func waitForTitles(_ titles: TitleLog, count: Int) async {
+        let deadline = ContinuousClock.now + .seconds(5)
+        while titles.values.count < count, ContinuousClock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
     }
 
     @Test func repeatedSuspendAndResumeAreSafe() async throws {
