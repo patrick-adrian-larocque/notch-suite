@@ -25,6 +25,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var environment: AppEnvironment?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // `NotchSuiteTests` is hosted by this app. Its tests build their own objects, and
+        // the test runner ends the host without `applicationWillTerminate`, which would
+        // orphan the adapter process this environment starts.
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else {
+            return
+        }
         let environment = AppEnvironment()
         environment.start()
         self.environment = environment

@@ -36,7 +36,10 @@ real sleep). Not yet done: a hands-on check with Music and Spotify (see "Next st
   (`AppTests/Media/FakeNowPlayingSource.swift`), a lock-backed fake conforming to
   `NowPlayingSource`. Covers a session starting and ending, artwork arriving after the
   track, engine health flipping `isEngineDown`, and a failed command setting
-  `lastCommandError`. Run it from the `NotchSuiteTests` scheme in Xcode.
+  `lastCommandError`. Run it from the `NotchSuiteTests` scheme in Xcode. The tests are
+  hosted by the app, so `AppDelegate` skips building `AppEnvironment` when
+  `XCTestConfigurationFilePath` is set; otherwise each run left an orphaned adapter behind
+  (the runner ends the host without `applicationWillTerminate`).
 
 ## The media contract
 
