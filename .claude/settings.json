@@ -70,9 +70,20 @@
       "mcp__xcode-tools__GetConsoleOutput",
       "mcp__xcode-tools__DocumentationSearch",
       "mcp__xcode-tools__RenderPreview",
-      "mcp__xcode-tools__XcodeOpenWorkspace",
       "mcp__xcode-tools__XcodeCloseWorkspace",
       "mcp__xcode-tools__XcodeSwitchScheme"
+    ],
+    "ask": [
+      "mcp__xcode-tools__XcodeOpenWorkspace",
+      "mcp__xcode-tools__RunProject",
+      "mcp__xcode-tools__StopProject",
+      "mcp__xcode-tools__RunCodeSnippet",
+      "mcp__xcode-tools__InvokeDebuggerCommand",
+      "mcp__xcode-tools__DeviceInteractionStartSession",
+      "mcp__xcode-tools__DeviceInteractionStartWorkspaceSession",
+      "mcp__xcode-tools__DeviceInteractionInstallAndRun",
+      "mcp__xcode-tools__DeviceInteractionSynthesize",
+      "mcp__xcode-tools__DeviceInteractionEndSession"
     ],
     "deny": [
       "Read(./.env)",

@@ -18,7 +18,7 @@
 - Run `./script/setup.sh` to resolve the core package and generate the macOS project.
 - Run `./script/verify.sh` before pushing; app changes also require `./script/build_and_run.sh --build-only`.
 - Use `./script/build_and_run.sh --verify` to build, launch, and check the app process.
-- `project.yml` owns Xcode project structure; the `.xcodeproj` is generated. Use the Xcode MCP server to inspect, build and test only, and do not use its structural tools. Codex is not repository-enforced: `disabled_tools` in your local Codex config is an untested suggestion (see `docs/xcode-mcp.md`).
+- `project.yml` owns Xcode project structure; the `.xcodeproj` is generated. Use the Xcode MCP server to inspect, build, test and diagnose; use its runtime and debug tools (run, stop, code snippets, debugger, device interaction) only when the task needs them and with approval; never use its structural tools. Codex is not repository-enforced: `disabled_tools` in your local Codex config is an untested suggestion (see `docs/xcode-mcp.md`).
 
 ## Codex Cloud (Linux)
 
