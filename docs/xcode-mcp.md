@@ -46,10 +46,23 @@ The server exposes 54 tools. The repository allows or denies them like this:
 move or remove entries in the generated project, and because source edits already go through
 the normal Edit and Write tools, which the repository's hooks cover.
 
-**Enforcement.** For Claude Code, `.claude/settings.json` denies the structural tools
-(`permissions.deny`). A deny rule wins over any allow and holds in every permission mode.
-For Codex, the committed `.codex/config.toml` does not define the `xcode-tools` server (it
-lives in each user's local config), so add this to the local definition:
+**The deny list is a point-in-time audit, not a complete list.** The 13 structural tools
+above were audited against Xcode 27.0 (27A266a) and its installed MCP server. Apple may add
+or rename tools, so the list is not permanently exhaustive. Re-audit after every Xcode
+upgrade (see the last section); until a new tool is classified, treat it as mutating.
+
+**Enforcement.**
+
+- **Claude Code: repository-configured.** `.claude/settings.json` denies the 13 structural
+  tools (`permissions.deny`). A deny rule wins over any allow and holds in every permission
+  mode. This is the policy that was tested.
+- **Codex: not repository-enforced.** The committed `.codex/config.toml` does not define the
+  `xcode-tools` server (it lives in each user's local config), so nothing committed here
+  restricts Codex. `disabled_tools` below is a local, unverified suggestion: the key was not
+  tested against Codex, and each user has to add it themselves.
+- **Other MCP clients** are not constrained by Claude's deny rules.
+- Runtime tools (`RunProject`, `RunCodeSnippet`, `DeviceInteraction*`, `InvokeDebuggerCommand`)
+  are a separate policy from structural mutation: they ask each time and are not denied.
 
 ```toml
 [mcp_servers.xcode-tools]
