@@ -149,7 +149,9 @@ final class NowPlayingPresentation {
             decodeArtwork(state)
         }
         artworkDeadlineTask?.cancel()
-        if let deadline = tracker.loadingDeadline {
+        // `loadingDeadline` stays set after it passes; only wait while still loading, or
+        // every refresh would schedule another zero-delay one.
+        if state == .loading, let deadline = tracker.loadingDeadline {
             artworkDeadlineTask = Task { [weak self] in
                 try? await Task.sleep(for: .seconds(max(0, deadline.timeIntervalSinceNow)))
                 guard !Task.isCancelled else { return }

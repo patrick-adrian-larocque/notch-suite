@@ -72,6 +72,24 @@ import Testing
         #expect(presentation.artwork == .loaded(bytes))
     }
 
+    @Test func aTrackWithoutArtworkSettlesOnTheFallbackInsteadOfSpinning() async {
+        let (presentation, source, _) = makeSUT()
+        source.emit(NowPlaying(playing: true, title: "Song"))
+        await waitUntil { presentation.artwork == .loading }  // `.missing` is also the start state
+        #expect(presentation.artwork == .loading)
+        await waitUntil(timeout: .seconds(5)) { presentation.artwork == .missing }
+        #expect(presentation.artwork == .missing)
+
+        // Once settled, nothing should keep the main actor busy. Process CPU time over a
+        // second of waiting stays near zero; a refresh loop would use most of it.
+        let before = clock()
+        try? await Task.sleep(for: .seconds(1))
+        let cpuSeconds = Double(clock() - before) / Double(CLOCKS_PER_SEC)
+
+        #expect(cpuSeconds < 0.3, "used \(cpuSeconds)s of CPU while idle")
+        #expect(presentation.nowPlaying?.title == "Song")  // keeps `presentation` alive
+    }
+
     @Test func engineHealthDrivesIsEngineDown() async {
         let (presentation, source, _) = makeSUT()
         #expect(!presentation.isEngineDown)
