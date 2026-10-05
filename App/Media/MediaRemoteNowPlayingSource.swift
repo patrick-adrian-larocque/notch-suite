@@ -62,6 +62,10 @@ final class MediaRemoteNowPlayingSource {
         engine.stop()
         for continuation in observers.values { continuation.finish() }
         observers.removeAll()
+        for continuation in artworkObservers.values { continuation.finish() }
+        artworkObservers.removeAll()
+        for continuation in healthObservers.values { continuation.finish() }
+        healthObservers.removeAll()
     }
 
     /// Ends the adapter for system sleep but keeps observers subscribed, unlike ``stop()``.
@@ -137,12 +141,24 @@ final class MediaRemoteNowPlayingSource {
             linesSinceStart = 0
         }
         switch status {
-        case .running:
-            for continuation in healthObservers.values { continuation.yield(.ready) }
         case .failed, .unavailable:
-            for continuation in healthObservers.values { continuation.yield(.down) }
-        case .stopped:
+            // A crash isn't "nothing playing": don't let a pending empty payload say so.
+            pendingNoSession?.cancel()
+            pendingNoSession = nil
+        case .running, .stopped:
             break
+        }
+        if let health = Self.health(of: status) {
+            for continuation in healthObservers.values { continuation.yield(health) }
+        }
+    }
+
+    /// What observers are told about `status`, or `nil` when it says nothing new.
+    private static func health(of status: MediaRemoteEngine.Status) -> NowPlayingSourceHealth? {
+        switch status {
+        case .running: .ready
+        case .failed, .unavailable: .down
+        case .stopped: nil
         }
     }
 
@@ -167,6 +183,8 @@ final class MediaRemoteNowPlayingSource {
     {
         let id = UUID()
         healthObservers[id] = continuation
+        // Replay, like `addObserver` does: the engine can fail before this registers.
+        if let health = Self.health(of: engine.status) { continuation.yield(health) }
         continuation.onTermination = { [weak self] _ in
             Task { @MainActor in self?.healthObservers[id] = nil }
         }

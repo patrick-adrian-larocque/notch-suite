@@ -85,6 +85,37 @@ import Testing
         #expect(!presentation.isEngineDown)
     }
 
+    @Test func aSessionStartingOnAnOpenIdleIslandStillShowsNowPlaying() async {
+        let (presentation, source, stateMachine) = makeSUT()
+        stateMachine.click()
+        #expect(stateMachine.mode == .idle)
+        #expect(stateMachine.level == .open)
+
+        source.emit(NowPlaying(playing: true, title: "Song"))
+        await waitUntil { stateMachine.mode == .nowPlaying }
+
+        #expect(stateMachine.mode == .nowPlaying)
+        // Also keeps `presentation` alive: its tasks hold it weakly.
+        #expect(presentation.nowPlaying?.title == "Song")
+    }
+
+    @Test func aParentAppAppearingLaterReplacesTheHelperProcessName() async {
+        let (presentation, source, _) = makeSUT()
+        let helper = AppIdentity(bundleIdentifier: "com.apple.WebKit.GPU")
+        source.emit(NowPlaying(app: helper, playing: true, title: "Video"))
+        await waitUntil { presentation.app != nil }
+        let before = presentation.app?.displayName
+
+        source.emit(
+            NowPlaying(
+                app: helper, parentApplicationBundleIdentifier: "com.apple.Safari",
+                playing: true, title: "Video"))
+        await waitUntil { presentation.app?.bundleIdentifier == "com.apple.Safari" }
+
+        #expect(presentation.app?.bundleIdentifier == "com.apple.Safari")
+        #expect(presentation.app?.displayName != before)
+    }
+
     @Test func aFailedCommandSetsLastCommandError() async {
         struct SendFailure: Error {}
         let (presentation, source, _) = makeSUT()

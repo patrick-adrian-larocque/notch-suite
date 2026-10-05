@@ -165,3 +165,16 @@ jobs:
             -destination 'platform=macOS' \
             -derivedDataPath build/DerivedData \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+      # The app's logic tests (AppTests/) aren't part of the SwiftPM package, so only
+      # this step runs them.
+      - name: Test app
+        if: hashFiles('project.yml') != ''
+        run: |
+          xcodebuild test \
+            -project NotchSuite.xcodeproj \
+            -scheme NotchSuiteTests \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO

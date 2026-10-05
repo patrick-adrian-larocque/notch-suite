@@ -94,11 +94,23 @@ final class NowPlayingPresentation {
                 lastCommandError = nil
             } catch {
                 lastCommandError = "Couldn't reach the player"
+                announce("Couldn't reach the player")
                 mediaRemoteLog.error(
                     "command \(String(describing: command), privacy: .public) failed: \(String(describing: error), privacy: .public)"
                 )
             }
         }
+    }
+
+    /// Tells a VoiceOver user that a control couldn't act (R11); sighted users see nothing change.
+    private func announce(_ message: String) {
+        guard NSWorkspace.shared.isVoiceOverEnabled else { return }
+        NSAccessibility.post(
+            element: NSApp as Any, notification: .announcementRequested,
+            userInfo: [
+                .announcement: message,
+                .priority: NSAccessibilityPriorityLevel.high.rawValue,
+            ])
     }
 
     // MARK: Updates
@@ -110,6 +122,8 @@ final class NowPlayingPresentation {
         if let update {
             if previous.map({ !$0.isSameTrack(as: update) }) ?? true
                 || previous?.app != update.app
+                || previous?.parentApplicationBundleIdentifier
+                    != update.parentApplicationBundleIdentifier
             {
                 app = resolver.resolve(update)
             }
@@ -162,7 +176,7 @@ final class NowPlayingPresentation {
     /// Shows Now Playing when a session starts on an idle island, and goes back to idle
     /// when the session ends while Now Playing shows.
     private func followSession(started: Bool, ended: Bool) {
-        if started, stateMachine.mode == .idle, stateMachine.level == .compact {
+        if started, stateMachine.mode == .idle {
             stateMachine.selectMode(.nowPlaying)
         } else if ended, stateMachine.mode == .nowPlaying {
             stateMachine.selectMode(.idle)
