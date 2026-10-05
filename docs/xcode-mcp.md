@@ -44,11 +44,11 @@ The server exposes 54 tools. The repository allows or denies them like this:
 | Build and test | `BuildProject`, `RunAllTests`, `RunSomeTests`, `GetTestList`, `RenderPreview` | Allowed |
 | Debug and diagnostics | `GetBuildLog`, `GetConsoleOutput`, `GetCrashIssueLogs`, `GetFieldPerformanceIssueLogs`, `GetTopCrashIssues`, `GetTopFieldPerformanceIssues`, `XcodeRefreshCodeIssuesInFile`, `InvokeDebuggerCommand` | Build log, console output and file diagnostics allowed; `InvokeDebuggerCommand` asks (explicit rule); the rest have no rule |
 | Runtime | `RunProject`, `StopProject`, `RunCodeSnippet`, `DeviceInteraction*` (5 tools) | Ask each time (explicit rule) |
+| **Structural mutation** | `XcodeNewProject`, `XcodeNewTarget`, `UpdateTargetBuildSetting`, `UpdateFileCompilerFlags`, `AddEntitlement`, `AddInfoPlist`, `LocalizationPlanner`, `XcodeMakeDir`, `XcodeMV`, `XcodeRM`, `XcodeWrite`, `XcodeUpdate`, `StringCatalogEdit` | **Denied** |
 
 "No rule" means the tool is neither allowed nor denied, so the permission mode decides
 whether it prompts; a permissive mode such as `bypassPermissions` can auto-approve it.
 Only the explicit `ask` rules prompt in every mode.
-| **Structural mutation** | `XcodeNewProject`, `XcodeNewTarget`, `UpdateTargetBuildSetting`, `UpdateFileCompilerFlags`, `AddEntitlement`, `AddInfoPlist`, `LocalizationPlanner`, `XcodeMakeDir`, `XcodeMV`, `XcodeRM`, `XcodeWrite`, `XcodeUpdate`, `StringCatalogEdit` | **Denied** |
 
 `XcodeWrite`, `XcodeUpdate`, `XcodeMV` and `XcodeRM` are denied because they also add,
 move or remove entries in the generated project, and because source edits already go through
@@ -123,7 +123,8 @@ second project. Whatever you learn goes into `project.yml`, then regenerate.
 A new Xcode can add tools. List the server's tools and compare with the table above:
 
 The script waits for each response before it sends the next message, as the MCP lifecycle
-requires: `initialize`, its response, `notifications/initialized`, then `tools/list`.
+requires: `initialize`, its response, `notifications/initialized`, then `tools/list`,
+repeated with each `nextCursor` until none is returned.
 
 ```sh
 python3 - <<'EOF'
@@ -151,11 +152,18 @@ send({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
     "clientInfo": {"name": "audit", "version": "0"}}})
 reply(1)
 send({"jsonrpc": "2.0", "method": "notifications/initialized"})
-send({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
-r = reply(2)
-if "result" not in r:
-    sys.exit("tools/list failed: %s" % r.get("error"))
-print("\n".join(sorted(t["name"] for t in r["result"]["tools"])))
+names, cursor, id = [], None, 2
+while True:  # tools/list is paginated: follow nextCursor until it is absent
+    send({"jsonrpc": "2.0", "id": id, "method": "tools/list",
+          "params": {"cursor": cursor} if cursor else {}})
+    r = reply(id)
+    if "result" not in r:
+        sys.exit("tools/list failed: %s" % r.get("error"))
+    names += [t["name"] for t in r["result"]["tools"]]
+    cursor, id = r["result"].get("nextCursor"), id + 1
+    if not cursor:
+        break
+print("\n".join(sorted(names)))
 p.stdin.close()
 p.terminate()
 EOF
