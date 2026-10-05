@@ -109,7 +109,7 @@ struct NowPlayingIslandView: View {
     }
 
     private var subtitle: String {
-        if presentation.isEngineDown { return "Now Playing is reconnecting…" }
+        if presentation.isEngineDown { return "Now Playing is unavailable" }
         guard let track = presentation.nowPlaying else { return "" }
         let parts = [track.artist, track.album].compactMap { $0 }.filter { !$0.isEmpty }
         return parts.joined(separator: " — ")

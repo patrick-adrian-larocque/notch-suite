@@ -60,6 +60,33 @@ import Testing
         #expect(!sawNoSession.value)
     }
 
+    /// Recorded from the real adapter (Spotify, 2026-10-04): on every track change it sends a
+    /// full payload with the new title and no `artworkData`, and the artwork follows later
+    /// as a diff holding only `artworkData`. A full payload replaces the state, so the
+    /// previous track's cover must not stay behind.
+    @Test func aTrackChangeDropsThePreviousArtworkUntilTheNewOneArrives() {
+        let (source, _) = makeSource()
+        let old = Data([1, 2, 3])
+        let new = Data([4, 5, 6])
+        func full(_ title: String, artwork: Data? = nil) -> String {
+            let art = artwork.map { #","artworkData":"\#($0.base64EncodedString())""# } ?? ""
+            return
+                #"{"type":"data","diff":false,"payload":{"playing":true,"title":"\#(title)","processIdentifier":1\#(art)}}"#
+        }
+
+        source.ingest(full("A", artwork: old))
+        #expect(source.artwork == old)
+
+        source.ingest(full("B"))  // title first, no artwork yet
+        #expect(source.current?.title == "B")
+        #expect(source.artwork == nil)
+
+        source.ingest(
+            #"{"type":"data","diff":true,"payload":{"artworkData":"\#(new.base64EncodedString())"}}"#
+        )
+        #expect(source.artwork == new)
+    }
+
     @Test func stopFinishesArtworkAndHealthObserversToo() async {
         let (source, _) = makeSource()
         let artworkFinished = Box(false)

@@ -1,7 +1,7 @@
 # Media integration (#24)
 
-Requirements, sources and open questions: `docs/requirements/now-playing.md` on the #24
-branch. Architecture background: `docs/architecture-review.md`.
+Requirements, sources and open questions: `docs/requirements/now-playing.md`.
+Architecture background: `docs/architecture-phase-1.md`.
 
 ## What exists
 

@@ -1,6 +1,6 @@
 # Architecture phase 1: media identity and ownership
 
-Follows `docs/architecture-review.md` (snapshot of `8ee5162`). This note records what
+Follows the architecture review in PR #49 (snapshot of `8ee5162`). This note records what
 phase 1 changed and the plans it deliberately left for later. The review's other
 findings still hold.
 
