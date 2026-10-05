@@ -38,16 +38,17 @@ public protocol NowPlayingSource: Sendable {
 
     /// A new stream of artwork changes. `nil` means the current track has none.
     ///
-    /// Each call returns its own stream; nothing is replayed to a new observer, since
-    /// the current artwork is already available through the latest ``nowPlayingUpdates()``
-    /// session. Artwork usually arrives once per track, a moment after its first update.
+    /// Each call returns its own stream; the current artwork is not replayed to a new
+    /// observer, and ``NowPlaying`` carries no artwork, so subscribe before the source
+    /// starts to see a track's first cover. Artwork usually arrives once per track, a
+    /// moment after its first update.
     func artworkUpdates() -> AsyncStream<Data?>
 
     /// A new stream of engine health changes.
     ///
-    /// Each call returns its own stream; nothing is replayed to a new observer. A
-    /// caller that needs the starting value should assume ``NowPlayingSourceHealth/ready``
-    /// until told otherwise.
+    /// Each call returns its own stream. A source may yield its current health first, as
+    /// the macOS source does when its engine is already running or down; otherwise a
+    /// caller should assume ``NowPlayingSourceHealth/ready`` until told otherwise.
     func healthUpdates() -> AsyncStream<NowPlayingSourceHealth>
 
     /// Sends `command` to the current player.
