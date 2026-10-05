@@ -35,9 +35,7 @@ final class NowPlayingPresentation {
     @ObservationIgnored private let stateMachine: IslandStateMachine
     @ObservationIgnored private let resolver: AppIdentityResolver
     @ObservationIgnored private var tracker = ArtworkTracker()
-    @ObservationIgnored private var artworkBytes: Data?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
-    @ObservationIgnored private var artworkTask: Task<Void, Never>?
     @ObservationIgnored private var healthTask: Task<Void, Never>?
     @ObservationIgnored private var artworkDeadlineTask: Task<Void, Never>?
     @ObservationIgnored private var decodeTask: Task<Void, Never>?
@@ -55,14 +53,8 @@ final class NowPlayingPresentation {
     func start() {
         let updates = source.nowPlayingUpdates()
         updatesTask = Task { [weak self] in
-            for await update in updates {
-                self?.apply(update)
-            }
-        }
-        let artworkUpdates = source.artworkUpdates()
-        artworkTask = Task { [weak self] in
-            for await data in artworkUpdates {
-                self?.artworkChanged(data)
+            for await snapshot in updates {
+                self?.apply(snapshot)
             }
         }
         let healthUpdates = source.healthUpdates()
@@ -75,7 +67,6 @@ final class NowPlayingPresentation {
 
     func stop() {
         updatesTask?.cancel()
-        artworkTask?.cancel()
         healthTask?.cancel()
         artworkDeadlineTask?.cancel()
         decodeTask?.cancel()
@@ -115,7 +106,10 @@ final class NowPlayingPresentation {
 
     // MARK: Updates
 
-    private func apply(_ update: NowPlaying?) {
+    /// Applies one snapshot: the session and its artwork arrive together, so the tracker
+    /// never has to match a cover to a track.
+    private func apply(_ snapshot: NowPlayingSnapshot?) {
+        let update = snapshot?.nowPlaying
         let previous = playback.nowPlaying
         playback = playback.updated(with: update)
         progress = update.flatMap { PlaybackProgress(nowPlaying: $0, sampledAt: .now) }
@@ -130,19 +124,14 @@ final class NowPlayingPresentation {
         } else {
             app = nil
         }
+        tracker.update(nowPlaying: update, artwork: snapshot?.artwork, at: .now)
         refreshArtwork()
         followSession(started: previous == nil && update != nil, ended: update == nil)
     }
 
-    private func artworkChanged(_ data: Data?) {
-        artworkBytes = data
-        refreshArtwork()
-    }
-
-    /// Feeds the tracker and decodes new artwork, then schedules the next re-read while
-    /// the artwork is still loading.
+    /// Reads the tracker and decodes new artwork, then schedules the next read while the
+    /// artwork is still loading.
     private func refreshArtwork() {
-        tracker.update(nowPlaying: playback.nowPlaying, artwork: artworkBytes, at: .now)
         let state = tracker.state(at: .now)
         if state != artwork {
             artwork = state

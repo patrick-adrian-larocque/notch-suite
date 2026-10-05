@@ -18,22 +18,18 @@ private struct FakePowerSource: PowerSource {
 }
 
 private actor FakeNowPlayingSource: NowPlayingSource {
-    nonisolated let updates: [NowPlaying?]
+    nonisolated let updates: [NowPlayingSnapshot?]
     private(set) var sent: [MediaCommand] = []
 
-    init(updates: [NowPlaying?]) {
+    init(updates: [NowPlayingSnapshot?]) {
         self.updates = updates
     }
 
-    nonisolated func nowPlayingUpdates() -> AsyncStream<NowPlaying?> {
+    nonisolated func nowPlayingUpdates() -> AsyncStream<NowPlayingSnapshot?> {
         AsyncStream { continuation in
             for update in updates { continuation.yield(update) }
             continuation.finish()
         }
-    }
-
-    nonisolated func artworkUpdates() -> AsyncStream<Data?> {
-        AsyncStream { $0.finish() }
     }
 
     nonisolated func healthUpdates() -> AsyncStream<NowPlayingSourceHealth> {
@@ -86,11 +82,16 @@ private actor FakeShelfStorage: ShelfStorage {
     @Test func nowPlayingSourceStreamsUpdatesAndTakesCommands() async throws {
         let song = NowPlaying(
             app: AppIdentity(bundleIdentifier: "com.apple.Music"), playing: true, title: "Song")
-        let fake = FakeNowPlayingSource(updates: [song, nil])
+        let cover = Data([1, 2, 3])
+        let fake = FakeNowPlayingSource(
+            updates: [NowPlayingSnapshot(nowPlaying: song, artwork: cover), nil])
         let source: any NowPlayingSource = fake
-        var received: [NowPlaying?] = []
+        var received: [NowPlayingSnapshot?] = []
         for await update in source.nowPlayingUpdates() { received.append(update) }
-        #expect(received == [song, nil])
+        #expect(received.count == 2)
+        #expect(received[0]?.nowPlaying == song)
+        #expect(received[0]?.artwork == cover)
+        #expect(received[1] == nil)
 
         try await source.send(.togglePlayPause)
         try await source.send(.nextTrack)

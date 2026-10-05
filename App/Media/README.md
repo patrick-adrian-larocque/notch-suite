@@ -15,7 +15,7 @@ Architecture background: `docs/architecture-phase-1.md`.
 | `AppEnvironment` | `App/AppEnvironment.swift` | Done. Owns app-level objects; the media source goes here. |
 | mediaremote-adapter | `Vendor/mediaremote-adapter/` | Bundled, unmodified, pinned to `73f14ab`. |
 | `MediaRemoteEngine` | `MediaRemoteEngine.swift` | Done. Adapted from boring.notch: runs `stream`, splits lines, restarts with backoff, runs `send`. |
-| `MediaRemoteNowPlayingSource` | `MediaRemoteNowPlayingSource.swift` | Done. Applies the contract below; started and stopped by `AppEnvironment`. Implements `NowPlayingSource`'s `artworkUpdates()` and `healthUpdates()` streams as well as `nowPlayingUpdates()`. |
+| `MediaRemoteNowPlayingSource` | `MediaRemoteNowPlayingSource.swift` | Done. Applies the contract below; started and stopped by `AppEnvironment`. Implements `NowPlayingSource`'s `nowPlayingUpdates()` (one `NowPlayingSnapshot` stream: the session and its artwork together) and `healthUpdates()`. |
 | `NowPlayingPresentation` | `NowPlayingPresentation.swift` | Done. Depends on `any NowPlayingSource`, not the concrete type, so tests can drive it with a fake. |
 | Compact, peek and open views | `NowPlayingIslandView.swift` | Done: artwork, eq bars, title, progress, transport controls, an engine-down subtitle. `#Preview`s with sample data cover all three levels. |
 
@@ -35,7 +35,7 @@ into `.nowPlaying` and back to idle when it ends. Sleep/wake is handled in
   `swift test` package) exercises `NowPlayingPresentation` over `FakeNowPlayingSource`
   (`AppTests/Media/FakeNowPlayingSource.swift`), a lock-backed fake conforming to
   `NowPlayingSource`. Covers a session starting and ending, artwork arriving after the
-  track, engine health flipping `isEngineDown`, and a failed command setting
+  track, a track without artwork never keeping the previous cover, engine health flipping `isEngineDown`, and a failed command setting
   `lastCommandError`. Run it from the `NotchSuiteTests` scheme in Xcode. The tests are
   hosted by the app, so `AppDelegate` skips building `AppEnvironment` when
   `XCTestConfigurationFilePath` is set; otherwise each run left an orphaned adapter behind
@@ -62,7 +62,7 @@ because commands always go to the system's current player.
 mediaremote-adapter (perl child)       MediaRemoteEngine            [App]
   -> stdout lines                      line buffer                  [App]
   -> NowPlayingStreamParser.ingest     -> NowPlayingReport          [NotchCore]
-  -> MediaRemoteNowPlayingSource       .session -> NowPlaying       [App]
+  -> MediaRemoteNowPlayingSource       .session -> NowPlayingSnapshot [App]
                                        .noSession -> nil
                                        .incomplete / throws -> keep last, log
   -> NowPlayingPresentation            PlaybackState.updated(with:) [NotchCore]
@@ -73,9 +73,10 @@ mediaremote-adapter (perl child)       MediaRemoteEngine            [App]
 ```
 
 `NowPlayingPresentation` depends on `any NowPlayingSource` (the `NotchCore` protocol),
-not the concrete `MediaRemoteNowPlayingSource`, and reaches artwork and engine health
-through that protocol's `artworkUpdates()` and `healthUpdates()` streams rather than
-closures on the concrete type. That's what lets `NotchSuiteTests` drive it with a fake.
+not the concrete `MediaRemoteNowPlayingSource`, and reaches the session, its artwork and engine
+health through that protocol's `nowPlayingUpdates()` and `healthUpdates()` streams
+rather than closures on the concrete type. A `NowPlayingSnapshot` carries the cover with
+its track, so the presentation never matches artwork to metadata by arrival order. That's what lets `NotchSuiteTests` drive it with a fake.
 
 `AppEnvironment` creates and starts the source and the presentation model, gives the
 presentation model the `stateMachine` and `appIdentityResolver`, and stops the engine

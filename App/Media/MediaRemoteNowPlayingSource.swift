@@ -5,7 +5,9 @@ import NotchCore
 ///
 /// Each engine line goes through `NowPlayingStreamParser`, and only real changes reach
 /// observers:
-/// - `.session` yields the `NowPlaying`, with whatever app identity it has.
+/// - `.session` yields a `NowPlayingSnapshot`: the `NowPlaying`, with whatever app
+///   identity it has, and the artwork from the same parser state. A cover that arrives
+///   later is another snapshot of the same track.
 /// - `.noSession` yields `nil`.
 /// - `.incomplete` and rejected lines yield nothing and are logged, so the last session
 ///   stays current. Neither is "nothing playing".
@@ -30,11 +32,8 @@ final class MediaRemoteNowPlayingSource {
         }
     }
 
-    /// The last update observers got. `nil` means no session, or none reported yet.
-    private(set) var current: NowPlaying?
-    /// The current artwork bytes, or `nil` when there is none. Kept apart from
-    /// `NowPlaying` so that core type stays small; see ``artworkUpdates()``.
-    private(set) var artwork: Data?
+    /// The last snapshot observers got. `nil` means no session, or none reported yet.
+    private(set) var current: NowPlayingSnapshot?
     /// The engine's status, for showing that the source is down rather than idle.
     var engineStatus: MediaRemoteEngine.Status { engine.status }
 
@@ -42,8 +41,7 @@ final class MediaRemoteNowPlayingSource {
     private var parser = NowPlayingStreamParser()
     private var linesSinceStart = 0
     private var pendingNoSession: Task<Void, Never>?
-    private var observers: [UUID: AsyncStream<NowPlaying?>.Continuation] = [:]
-    private var artworkObservers: [UUID: AsyncStream<Data?>.Continuation] = [:]
+    private var observers: [UUID: AsyncStream<NowPlayingSnapshot?>.Continuation] = [:]
     private var healthObservers: [UUID: AsyncStream<NowPlayingSourceHealth>.Continuation] = [:]
 
     init(engine: MediaRemoteEngine = MediaRemoteEngine()) {
@@ -62,8 +60,6 @@ final class MediaRemoteNowPlayingSource {
         engine.stop()
         for continuation in observers.values { continuation.finish() }
         observers.removeAll()
-        for continuation in artworkObservers.values { continuation.finish() }
-        artworkObservers.removeAll()
         for continuation in healthObservers.values { continuation.finish() }
         healthObservers.removeAll()
     }
@@ -94,18 +90,15 @@ final class MediaRemoteNowPlayingSource {
         }
         switch report {
         case .session(let nowPlaying):
-            updateArtwork(parser.artworkData)
-            publish(nowPlaying)
+            publish(NowPlayingSnapshot(nowPlaying: nowPlaying, artwork: parser.artworkData))
         case .noSession:
             if linesSinceStart == 1 {
                 pendingNoSession = Task { [weak self] in
                     try? await Task.sleep(for: Self.firstEmptyPayloadGrace)
                     guard !Task.isCancelled else { return }
-                    self?.updateArtwork(nil)
                     self?.publish(nil)
                 }
             } else {
-                updateArtwork(nil)
                 publish(nil)
             }
         case .incomplete(let missingKeys):
@@ -115,16 +108,14 @@ final class MediaRemoteNowPlayingSource {
         }
     }
 
-    private func updateArtwork(_ data: Data?) {
-        guard data != artwork else { return }
-        artwork = data
-        for continuation in artworkObservers.values { continuation.yield(data) }
-    }
-
-    private func publish(_ nowPlaying: NowPlaying?) {
-        guard nowPlaying != current else { return }
-        current = nowPlaying
-        if let nowPlaying {
+    /// Yields `snapshot` unless it repeats the current one. A repeat is the same
+    /// `NowPlaying` with the same artwork; a cover-only change is not a repeat. The
+    /// artwork comparison is one `Data` equality per adapter line, as before.
+    private func publish(_ snapshot: NowPlayingSnapshot?) {
+        guard snapshot?.nowPlaying != current?.nowPlaying || snapshot?.artwork != current?.artwork
+        else { return }
+        current = snapshot
+        if let nowPlaying = snapshot?.nowPlaying {
             let app = nowPlaying.app
             mediaRemoteLog.info(
                 "session: playing=\(nowPlaying.playing, privacy: .public) bundle=\(app.bundleIdentifier ?? "-", privacy: .public) pid=\(app.processIdentifier.map(String.init) ?? "-", privacy: .public) title=\(nowPlaying.title, privacy: .private)"
@@ -132,7 +123,7 @@ final class MediaRemoteNowPlayingSource {
         } else {
             mediaRemoteLog.info("no session")
         }
-        for continuation in observers.values { continuation.yield(nowPlaying) }
+        for continuation in observers.values { continuation.yield(snapshot) }
     }
 
     private func engineStatusChanged(_ status: MediaRemoteEngine.Status) {
@@ -162,20 +153,12 @@ final class MediaRemoteNowPlayingSource {
         }
     }
 
-    private func addObserver(_ continuation: AsyncStream<NowPlaying?>.Continuation) {
+    private func addObserver(_ continuation: AsyncStream<NowPlayingSnapshot?>.Continuation) {
         let id = UUID()
         observers[id] = continuation
         continuation.yield(current)
         continuation.onTermination = { [weak self] _ in
             Task { @MainActor in self?.observers[id] = nil }
-        }
-    }
-
-    private func addArtworkObserver(_ continuation: AsyncStream<Data?>.Continuation) {
-        let id = UUID()
-        artworkObservers[id] = continuation
-        continuation.onTermination = { [weak self] _ in
-            Task { @MainActor in self?.artworkObservers[id] = nil }
         }
     }
 
@@ -193,18 +176,11 @@ final class MediaRemoteNowPlayingSource {
 
 extension MediaRemoteNowPlayingSource: NowPlayingSource {
     /// Safe to call from any thread: the stream registers on the main actor, then yields
-    /// the current state first. Before the adapter reports anything, that is `nil`.
-    nonisolated func nowPlayingUpdates() -> AsyncStream<NowPlaying?> {
+    /// the current snapshot first. Before the adapter reports anything, that is `nil`.
+    nonisolated func nowPlayingUpdates() -> AsyncStream<NowPlayingSnapshot?> {
         let (stream, continuation) = AsyncStream.makeStream(
-            of: NowPlaying?.self, bufferingPolicy: .bufferingNewest(1))
+            of: NowPlayingSnapshot?.self, bufferingPolicy: .bufferingNewest(1))
         Task { @MainActor in self.addObserver(continuation) }
-        return stream
-    }
-
-    nonisolated func artworkUpdates() -> AsyncStream<Data?> {
-        let (stream, continuation) = AsyncStream.makeStream(
-            of: Data?.self, bufferingPolicy: .bufferingNewest(1))
-        Task { @MainActor in self.addArtworkObserver(continuation) }
         return stream
     }
 

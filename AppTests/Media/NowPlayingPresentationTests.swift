@@ -59,17 +59,71 @@ import Testing
         #expect(presentation.nowPlaying == nil)
     }
 
+    private func track(_ title: String) -> NowPlaying {
+        NowPlaying(playing: true, title: title)
+    }
+
     @Test func artworkArrivingAfterTheTrackLoads() async {
         let (presentation, source, _) = makeSUT()
-        source.emit(NowPlaying(playing: true, title: "Song"))
+        source.emit(track("Song"))
         await waitUntil { presentation.artwork == .loading }
         #expect(presentation.artwork == .loading)
 
         let bytes = Data([0x01, 0x02, 0x03])
-        source.emitArtwork(bytes)
+        source.emit(track("Song"), artwork: bytes)  // the cover alone changes: same track
         await waitUntil { presentation.artwork == .loaded(bytes) }
 
         #expect(presentation.artwork == .loaded(bytes))
+    }
+
+    /// The old split streams could leave track A's cover on track B when B had none. A
+    /// snapshot for B carries no cover, so B goes to `.loading` and never shows A's.
+    @Test func aTrackWithoutArtworkNeverKeepsThePreviousCover() async {
+        let (presentation, source, _) = makeSUT()
+        let coverA = Data([0xA1])
+        source.emit(track("A"), artwork: coverA)
+        await waitUntil { presentation.artwork == .loaded(coverA) }
+        #expect(presentation.artwork == .loaded(coverA))
+
+        source.emit(track("B"))
+        await waitUntil { presentation.nowPlaying?.title == "B" }
+
+        #expect(presentation.nowPlaying?.title == "B")
+        #expect(presentation.artwork == .loading)
+        await waitUntil(timeout: .seconds(5)) { presentation.artwork == .missing }
+        #expect(presentation.artwork == .missing)
+    }
+
+    @Test func lateArtworkForTheNewTrackReplacesTheFallbackAndNeverTheOldCover() async {
+        let (presentation, source, _) = makeSUT()
+        let coverA = Data([0xA1])
+        let coverB = Data([0xB1])
+        source.emit(track("A"), artwork: coverA)
+        source.emit(track("B"))
+        await waitUntil { presentation.nowPlaying?.title == "B" }
+        #expect(presentation.artwork != .loaded(coverA))
+
+        source.emit(track("B"), artwork: coverB)
+        await waitUntil { presentation.artwork == .loaded(coverB) }
+
+        #expect(presentation.artwork == .loaded(coverB))
+    }
+
+    @Test func rapidTrackChangesSettleOnTheLastTracksOwnState() async {
+        let (presentation, source, _) = makeSUT()
+        let coverA = Data([0xA1])
+        let coverC = Data([0xC1])
+        source.emit(track("A"), artwork: coverA)
+        source.emit(track("B"))
+        source.emit(track("C"), artwork: coverC)  // newest-value buffering may drop B
+        await waitUntil { presentation.artwork == .loaded(coverC) }
+
+        #expect(presentation.nowPlaying?.title == "C")
+        #expect(presentation.artwork == .loaded(coverC))
+
+        source.emit(track("D"))  // an artless track after a cover
+        await waitUntil { presentation.nowPlaying?.title == "D" }
+        #expect(presentation.artwork == .loading)
     }
 
     @Test func aTrackWithoutArtworkSettlesOnTheFallbackInsteadOfSpinning() async {

@@ -65,7 +65,7 @@ seeking, or lyrics. They can come later as separate issues if wanted.
 | --- | --- | --- |
 | A1 | Music and Spotify playback updates the island within 1 s | manual, Debug build |
 | A2 | prev/play/pause/next reach the player | manual |
-| A3 | Slow or missing artwork shows the fallback | manual plus `ArtworkState` tests |
+| A3 | Slow or missing artwork shows the fallback, and never the previous track's cover | manual plus `ArtworkState` tests and `NowPlayingPresentationTests` / `MediaRemoteSourceTests` (`NotchSuiteTests`) |
 | A4 | Engine missing or killed: no fake "nothing playing", recovers | `NowPlayingPresentationTests.engineHealthDrivesIsEngineDown` (`NotchSuiteTests`, over a fake `NowPlayingSource`) plus manual `kill` against the real adapter |
 | A5 | Split lines, CRLF, diffs, player gone | parser tests (exist) plus line-buffer tests |
 | A6 | Quit and sleep leave no `perl` child | `pgrep -f mediaremote-adapter` |

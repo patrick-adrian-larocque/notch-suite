@@ -98,7 +98,9 @@ import Testing
         let titles = TitleLog()
         let updates = rig.source.nowPlayingUpdates()
         Task { @MainActor in
-            for await update in updates { if let update { titles.values.append(update.title) } }
+            for await update in updates {
+                if let update { titles.values.append(update.nowPlaying.title) }
+            }
             titles.finished = true
         }
         rig.source.start()
