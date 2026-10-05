@@ -78,6 +78,26 @@ import Testing
 
     /// The old split streams could leave track A's cover on track B when B had none. A
     /// snapshot for B carries no cover, so B goes to `.loading` and never shows A's.
+    /// The session's `elapsedTime` is as of the player's last report, so a cover-only
+    /// snapshot must not re-sample it as if it were current.
+    @Test func aCoverOnlySnapshotKeepsTheProgressSample() async {
+        let (presentation, source, _) = makeSUT()
+        let song = NowPlaying(
+            playing: true, title: "Song", duration: 200, elapsedTime: 10, playbackRate: 1)
+        source.emit(song)
+        await waitUntil { presentation.progress != nil }
+        let sampled = presentation.progress
+        try? await Task.sleep(for: .milliseconds(50))
+
+        let cover = Data([0x01])
+        source.emit(song, artwork: cover)
+        await waitUntil { presentation.artwork == .loaded(cover) }
+
+        #expect(presentation.artwork == .loaded(cover))
+        #expect(sampled != nil)
+        #expect(presentation.progress == sampled)
+    }
+
     @Test func aTrackWithoutArtworkNeverKeepsThePreviousCover() async {
         let (presentation, source, _) = makeSUT()
         let coverA = Data([0xA1])

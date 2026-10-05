@@ -112,7 +112,11 @@ final class NowPlayingPresentation {
         let update = snapshot?.nowPlaying
         let previous = playback.nowPlaying
         playback = playback.updated(with: update)
-        progress = update.flatMap { PlaybackProgress(nowPlaying: $0, sampledAt: .now) }
+        // A cover-only snapshot repeats the session unchanged, with the `elapsedTime` the
+        // player last reported. Sampling it again would move progress back to that value.
+        if update != previous {
+            progress = update.flatMap { PlaybackProgress(nowPlaying: $0, sampledAt: .now) }
+        }
         if let update {
             if previous.map({ !$0.isSameTrack(as: update) }) ?? true
                 || previous?.app != update.app
