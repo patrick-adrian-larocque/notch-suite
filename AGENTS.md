@@ -3,7 +3,7 @@
 - For requested changes to this repository, finish by committing and pushing the verified changes to `origin` without asking for a separate commit or push instruction.
 - For issue work, use a `claude/issue-<N>-<slug>` branch. This takes precedence over the general branch rule below.
 - For other work starting on `main`, create a descriptive `codex/<task>` branch before committing. If already on a branch for the current task, keep using it. Do not push changes directly to `main`.
-- For every pull request, follow the draft, CI, current-head review, and merge gates in [docs/review-workflow.md](docs/review-workflow.md).
+- For every pull request, request Codex review with `@codex review`, then follow the draft, CI, current-head review, and merge gates in [docs/review-workflow.md](docs/review-workflow.md).
 - Stage and commit only files that belong to the current task. Leave unrelated changes untouched. Use a short, descriptive commit message, and never force-push.
 - Do not commit or push for read-only requests, or when the user asks to keep changes local. If authentication, permissions, or branch rules prevent a push, report the blocker and the local commit state.
 
