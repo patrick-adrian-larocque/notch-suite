@@ -7,7 +7,7 @@ package. The macOS app still needs a Mac for compilation and runtime validation.
 | --- | --- | --- |
 | Build and test `NotchCore` | Yes | Yes |
 | Parser fixtures, state machines, layout, geometry, settings, and shelf logic | Yes | Yes |
-| Strict Swift formatting across `Sources`, `Tests`, and `App` | Yes | Yes |
+| Strict Swift formatting across `Sources`, `Tests`, `App`, and `AppTests` | Yes | Yes |
 | LLDB debugging of core tests | Yes, when the environment permits tracing processes | Yes |
 | Compile `App/` with SwiftUI, AppKit, and macOS services | No | Xcode required |
 | Launch the notch UI, media services, file drops, and system integration | No | Runtime checks required |

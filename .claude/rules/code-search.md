@@ -24,3 +24,9 @@ In cloud sessions the SessionStart hook installs these. Its startup line says wh
 - If a tool is missing or errors, use the fallback from the table and mention it in one line. Don't install tools mid-task unless asked.
 - To search the reference repos (boring.notch, NotchDrop, mediaremote-adapter), shallow-clone them into a temporary directory outside this repo, then use the same tools.
 - On a Mac, the extra tools come from `brew install fd fzf ast-grep`.
+
+## Shell pitfalls
+- zsh aborts the whole command when an unquoted glob matches nothing: `(eval):1: no matches found: --include=*.swift`. grep never runs. Quote globs and patterns: `--include='*.swift'`. The SessionStart hook turns this off on fresh sessions, but a resumed session doesn't source it.
+- In Bash, `grep` is a function that runs the embedded ugrep in basic-regex mode (`-G`). `a|b` matches nothing without `-E`, with no error. Use `-E`, or `-P` for lookahead.
+- The function isn't visible to `xargs`, `bash -c`, scripts or `env -i`. They get BSD grep, which has no `-P`: `grep: invalid option -- P`. Use `rg` there.
+- `rg` skips gitignored paths. Add `--no-ignore` to search `build/` or `.build/`.
