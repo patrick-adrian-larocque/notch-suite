@@ -1,6 +1,6 @@
 ---
 name: work-issue
-description: Implement a GitHub issue end to end. Reads the issue, continues any existing PR or branch for it (or branches), implements with tests, runs /swift-check, opens or updates the PR that closes the issue, marks it ready, and works Copilot's findings.
+description: Implement a GitHub issue end to end. Reads the issue, continues any existing PR or branch for it (or branches), implements with tests, runs /swift-check, opens or updates the PR that closes the issue, marks it ready, and addresses Codex review findings.
 disable-model-invocation: true
 argument-hint: "[issue-number]"
 arguments: [issue]
@@ -34,10 +34,10 @@ Implement GitHub issue #$issue in this repository.
 8. **Open or update the PR.**
    - With no PR yet, open a draft that follows `.github/pull_request_template.md`. It says `Closes #$issue` and has a test plan listing only what you actually ran, plus anything that still needs a real Mac.
    - With an existing PR, update its description instead.
-   - Mark the PR ready for review once every acceptance criterion you can check on a draft is verified and the Linux job is green. If the PR changes nothing `ci.yml` watches (`Package.swift`, `Package.resolved`, `Sources/`, `Tests/`, `.swift-format`, `ci.yml`, `scripts/ci-swift.sh`), no CI runs and there is nothing to wait for.
-   - Then request a Copilot review. On GitHub's runners, marking the PR ready is what starts the macOS job, so wait for it before counting a macOS criterion as verified.
-9. **Work Copilot's findings on this PR.**
-   - For each finding, push a fix and reply on its thread with the commit.
-   - Then re-request a Copilot review. It marks a finding resolved only when it re-reviews a commit that fixes it; resolving a thread by hand doesn't update its overview.
-   - Repeat until the latest overview lists no open findings. Don't merge: the owner merges.
-10. **Report** the PR link, whether it's still a draft, the state of each CI job, any open Copilot findings, and any acceptance criterion you could not verify.
+   - Mark the PR ready for review once every acceptance criterion you can check on a draft is verified and the Linux job, if CI runs, is green. Consult `.github/workflows/ci.yml` for watched paths; outside those filters no CI runs and there is nothing to wait for.
+   - Then request Codex review with a PR comment: `@codex review`. On GitHub's runners, marking the PR ready is what starts the macOS job, so wait for it before counting a macOS criterion as verified.
+9. **Address Codex findings on this PR.**
+   - Check both inline review threads and PR conversation comments for actionable findings. Push fixes and reply with the commit and disposition of each finding.
+   - After every change to the PR head, re-request Codex review. Verify review completion against the current head; an earlier review, request, reaction, or pending review does not satisfy the gate.
+   - Follow `CLAUDE.md`'s review gate until Codex review of the current head has completed, all actionable findings are addressed, and applicable CI passes. A completed bot review or completion/no-findings comment tied to that head suffices without a formal GitHub `APPROVED` review; separate branch protections and required approvals still apply. Report conflicts, never relax protections. Don't merge: the owner merges.
+10. **Report** the PR link, whether it's still a draft, the state of each CI job, the current head and completed Codex review evidence, any unresolved actionable findings or protection conflicts, and any acceptance criterion you could not verify.

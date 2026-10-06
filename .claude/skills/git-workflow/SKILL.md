@@ -33,6 +33,6 @@ Read-only git (`status`, `diff`, `log`, `branch`) needs no approval. Anything th
 - Open it as a draft, following `.github/pull_request_template.md`, with `Closes #<N>`.
 - The test plan lists only what you actually ran.
 - End the description with the PR attribution line the session gives you, if any.
-- Mark it ready once the checkable criteria are verified and the Linux job is green, then request a Copilot review. Fix findings on the same PR. The owner merges.
+- Mark it ready once the checkable criteria are verified and the Linux job, if CI runs, is green, then request Codex review with `@codex review`. Follow `CLAUDE.md`'s review gate: completed review of the current head, all actionable inline and conversation findings addressed, applicable CI passing, and separate branch protections satisfied. Re-request after every head change. The owner merges.
 
 Report what you did, and what you stopped on, in a few lines.
