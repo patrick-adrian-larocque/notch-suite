@@ -1,6 +1,6 @@
 # Engineering rules: reuse and verify before building
 
-Before any non-trivial investigation, proposal, or implementation, read this file and apply the relevant sections. It is the single canonical copy for Claude and Codex; `CLAUDE.md` and `AGENTS.md` point here.
+Before any non-trivial investigation, proposal, or implementation, read this file and apply the relevant sections. This is provider-neutral repository guidance; each provider reaches it from its own instruction entry point.
 
 ## 1. Understand existing behavior
 
@@ -17,7 +17,7 @@ Do not select a solution before understanding the responsibility it must fulfill
 
 Evaluate solutions in this order:
 
-1. Existing project implementation or dependency (see `CLAUDE.md`, "Existing implementation sources").
+1. Existing project implementation or dependency (see `README.md`, "Credits / Inspiration and implementation sources").
 2. Native Swift, Foundation, AppKit, or platform capability.
 3. Established third-party library.
 4. Extend or refactor the existing responsibility owner.
