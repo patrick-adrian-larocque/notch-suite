@@ -20,7 +20,7 @@
 ## Instruction ownership
 
 - `AGENTS.md` and, when present, `.agents/` are the Codex instruction entry points. `CLAUDE.md` and `.claude/` belong to Claude and are not Codex instruction sources; inspect them only when the task itself concerns Claude configuration.
-- Shared repository context lives in provider-neutral files such as `README.md` and `docs/`, linked directly from each provider's own entry point. Shared files must not define or copy provider, account, agent, thread, or authentication identifiers.
+- Shared repository context lives in provider-neutral files such as `README.md` and `docs/`, linked directly from each provider's own entry point. Concrete reviewer triggers stay in those entry points; shared policy must not copy provider, account, agent, thread, or authentication identifiers.
 
 ## Workspace commands
 

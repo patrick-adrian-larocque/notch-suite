@@ -10,8 +10,8 @@
 | `.vscode/extensions.json` | Recommended Swift, Todo Tree, Codex, and Markdown extensions. |
 | `.codex/config.toml` | Project root discovery without machine-specific model or permission overrides. |
 | `.codex/environments/environment.toml` | Worktree setup and Run/Verify/Build/Lint actions. |
-| `AGENTS.md` / `.agents/` | Codex instructions and, when present, local Codex skills/agents. |
-| `CLAUDE.md` / `.claude/` | Claude instructions, skills, agents, rules, and hooks. |
+| `AGENTS.md` / `.agents/` | Instructions and, when present, local skills/agents for clients that recognize these paths. |
+| `CLAUDE.md` / `.claude/` | Instructions, skills, agents, rules, and hooks for clients that recognize these paths. |
 | `README.md` / `docs/` | Provider-neutral project facts and shared repository policy linked from each provider's own entry point. |
 | `script/setup.sh` | Resolve the package; on macOS check Xcode/XcodeGen and generate the app project. |
 | `script/setup-cloud.sh` | Install native Swift 6.4 and LLDB on Ubuntu 24.04 for Codex Cloud, then resolve the package. |
