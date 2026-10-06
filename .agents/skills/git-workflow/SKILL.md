@@ -3,7 +3,7 @@ name: git-workflow
 description: This project's git conventions for branching, committing, pushing, and opening PRs (branch names, what to stage, commit attribution, pre-push checks, which remotes never to push to). Use before creating a branch, committing, pushing, or opening a PR here.
 ---
 
-Follow these rules for the git step the user named (branch, commit, push or pr), or for whichever steps you are about to do. For a whole issue, use /work-issue, which includes them.
+Follow these rules for the git step the user named (branch, commit, push or pr), or for whichever steps you are about to do. For a whole issue, use $work-issue, which includes them.
 
 Read-only git (`status`, `diff`, `log`, `branch`) needs no approval. Anything that writes goes through the normal permission prompt.
 
@@ -23,10 +23,10 @@ Read-only git (`status`, `diff`, `log`, `branch`) needs no approval. Anything th
 6. Don't use `--no-verify`, `--amend`, or `reset --hard` unless asked. A failed hook means fix the cause and make a new commit.
 
 ## Push
-1. Run /swift-check first. On a Mac, if the change touches `App/` or `project.yml`, also run /macos-build.
+1. Run $swift-check first. On a Mac, if the change touches `App/` or `project.yml`, also run $macos-build.
 2. `git remote -v` must show only this repo's `origin`. Never push to `patrick-adrian-larocque/boring.notch`, `notchdrop`, or `mediaremote-adapter`; they are read-only references.
 3. Never force-push, and never push to `main` directly.
-4. If the PR ports code from a reference repo, run the `license-auditor` agent before it merges (see /port-from-reference).
+4. If the PR ports code from a reference repo, before it merges, check its changes for code adapted from the reference repos and confirm the copyright notices and `THIRD_PARTY_LICENSES` entries are present (see $port-from-reference).
 
 ## Pull request
 - Open it as a draft, following `.github/pull_request_template.md`, with `Closes #<N>`.

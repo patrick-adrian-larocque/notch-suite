@@ -1,10 +1,6 @@
 ---
 name: swift-check
 description: Build, test, and strictly lint the Swift package (swift build, swift test, swift format lint --strict). Run it before every push, and whenever asked whether the code still builds or the tests pass.
-allowed-tools:
-  - Bash(swift build *)
-  - Bash(swift test *)
-  - Bash(swift format lint *)
 ---
 
 Run this project's required pre-push checks from the repository root and report the result.

@@ -1,13 +1,7 @@
 ---
 name: triage-issue
-description: Triage a GitHub issue. Applies area labels, flags needs-mac, and asks the author for any missing required details. The issue-triage workflow runs it on newly opened issues.
-# It labels issues and posts comments, so only a person or the triage workflow's
-# `/triage-issue <n>` prompt may start it, never Codex on its own.
-allowed-tools:
-  - Bash(gh issue view *)
-  - Bash(gh issue edit * --add-label *)
-  - Bash(gh issue comment *)
-  - Bash(gh label list *)
+description: Triage a GitHub issue. Applies area labels, flags needs-mac, and asks the author for any missing required details.
+# It labels issues and posts comments, so only a person may start it, never Codex on its own.
 ---
 
 Triage issue #<N>, where <N> is the number the user gave. Substitute the real number into every command below.

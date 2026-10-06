@@ -1,12 +1,9 @@
 ---
 name: macos-build
 description: Generate the Xcode project with XcodeGen and build the NotchSuite macOS app, unsigned like CI. Use when asked whether the macOS app still builds, or after changing project.yml or the files in App/.
-allowed-tools:
-  - Bash(xcodegen *)
-  - Bash(xcodebuild build -project NotchSuite.xcodeproj *)
 ---
 
-Build the macOS app from the repository root and report the result. `/swift-check` covers only the platform-independent package.
+Build the macOS app from the repository root and report the result. `$swift-check` covers only the platform-independent package.
 
 1. If `project.yml` is missing, say there is nothing to build and stop.
 2. If `xcodegen` or `xcodebuild` isn't on `PATH`, say which is missing (`brew install xcodegen`, Xcode) and stop. This needs a Mac.

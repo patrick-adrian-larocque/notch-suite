@@ -1,6 +1,6 @@
 ---
 name: work-issue
-description: Implement a GitHub issue end to end. Reads the issue, continues any existing PR or branch for it (or branches), implements with tests, runs /swift-check, opens or updates the PR that closes the issue, marks it ready, and addresses Codex review findings.
+description: Implement a GitHub issue end to end. Reads the issue, continues any existing PR or branch for it (or branches), implements with tests, runs $swift-check, opens or updates the PR that closes the issue, marks it ready, and addresses Codex review findings.
 ---
 
 Implement GitHub issue #<N> in this repository, where <N> is the number the user gave.
@@ -25,8 +25,8 @@ Implement GitHub issue #<N> in this repository, where <N> is the number the user
 5. **Implement with tests.**
    - Follow `AGENTS.md`.
    - Keep `NotchCore` free of AppKit, SwiftUI, and Combine.
-   - If you adapt code from boring.notch, NotchDrop, or mediaremote-adapter, follow /port-from-reference.
-6. **Verify** with /swift-check and fix every failure before continuing. If the change touches `App/` or `project.yml` and you are on a Mac, also run /macos-build.
+   - If you adapt code from boring.notch, NotchDrop, or mediaremote-adapter, follow $port-from-reference.
+6. **Verify** with $swift-check and fix every failure before continuing. If the change touches `App/` or `project.yml` and you are on a Mac, also run $macos-build.
 7. **Commit and push.** Keep commits focused, with messages that explain why.
 8. **Open or update the PR.**
    - With no PR yet, open a draft that follows `.github/pull_request_template.md`. It says `Closes #<N>` and has a test plan listing only what you actually ran, plus anything that still needs a real Mac.

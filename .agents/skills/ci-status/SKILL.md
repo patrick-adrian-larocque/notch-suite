@@ -19,4 +19,4 @@ Use whichever GitHub tools the session has: GitHub MCP tools in cloud sessions, 
    - infrastructure, only with evidence, such as the same commit passing earlier
 6. Propose a fix. Don't push anything unless asked.
 
-For a long or unclear failure, delegate to the `macos-ci-investigator` agent.
+For a long or unclear failure, hand the log analysis to a subagent if your environment has one.
