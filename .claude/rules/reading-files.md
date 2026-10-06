@@ -2,6 +2,17 @@
 
 Read files with the Read tool. Use Grep first when you don't yet know which file or section you need.
 
+## Default method: locate, read, follow
+
+1. **Locate.** Find the area by symbol, file name, error text or exact phrase: Grep or `rg -n`, `ast-grep`, Glob or `fd`. No semantic-search tool is configured here, so use the closest exact-match one. Don't read the whole file yet.
+2. **Read** the section around the match with `offset`/`limit` (or `sed -n 'A,Bp'`), enough to understand it.
+3. **Follow** evidence, not guesses: callers, imports, references, config, tests, linked sections.
+4. **Decide.** Enough evidence: stop. Not enough: expand.
+5. **Expand** slightly, changing one search dimension at a time: a nearby range, a related symbol, or another relevant file. Then read, follow and decide again, only as many times as needed.
+6. **Last resort:** read the whole file only when understanding genuinely needs global context, such as a short config or code whose parts depend on each other.
+
+## When a read fails
+
 If a read fails or comes back partial, pick the fallback that matches the cause:
 
 | What went wrong | Fallback |
