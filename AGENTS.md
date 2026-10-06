@@ -1,5 +1,7 @@
 # Repository workflow for Codex
 
+> Scope: these are instructions for Codex. Other agents that also read this file (Claude Code reads `CLAUDE.md` instead) should ignore its Codex-specific rules: the `@codex review` trigger, `.codex/`, and Codex Cloud. Shared policy is in `docs/`; how each tool reads these files is in [docs/agent-instruction-compatibility.md](docs/agent-instruction-compatibility.md).
+
 - For requested changes to this repository, finish by committing and pushing the verified changes to `origin` without asking for a separate commit or push instruction.
 - For issue work, use a `claude/issue-<N>-<slug>` branch. This takes precedence over the general branch rule below.
 - For other work starting on `main`, create a descriptive `codex/<task>` branch before committing. If already on a branch for the current task, keep using it. Do not push changes directly to `main`.

@@ -1,5 +1,7 @@
 # Notch Suite
 
+> Scope: these are instructions for Claude Code. Other agents that also read this file (some load both it and `AGENTS.md`) should ignore its Claude-specific rules: the `@claude` reviewer, and `.claude/` skills, hooks and rules. Shared policy is in `docs/`; how each tool reads these files is in `docs/agent-instruction-compatibility.md`.
+
 A macOS notch utility built from scratch: Now Playing media control, a file drop shelf, and system HUD replacements. GPLv3. `NotchCore` and a first app shell exist; `NotchUI` is planned.
 
 ## Architecture
@@ -73,7 +75,7 @@ Follow `/port-from-reference` whenever code from them is copied or closely follo
 - One issue, one branch, one PR. The branch is `claude/issue-<N>-<slug>` (a cloud session may assign its own branch name instead). The PR follows `.github/pull_request_template.md` and says `Closes #N`.
 - Before starting an issue, look for an open PR that closes it (`Closes #N`) or an unfinished `claude/issue-<N>-*` branch. A branch is finished only when it has no open PR and at least one merged or closed PR; an open PR always wins. Check with `gh pr list --head "<name>" --state all --json state,number`, using the bare branch name without `origin/` (with the prefix it returns `[]`). Git ancestry misses squash merges. If one exists, continue on it; never open a second PR for the same issue. `/work-issue` covers fork PRs and multiple matches.
 - Never merge another open PR's branch into yours. If your work needs it, say so in your PR and wait for that PR to merge first.
-- Review: Claude's PRs are reviewed by Claude through the `@claude` workflow (`.github/workflows/claude.yml`). The owner comments `@claude review` on the PR, or asks Claude to post it. The workflow needs the `CLAUDE_CODE_OAUTH_TOKEN` repository secret (issue #10) and skips with a warning without it; until then the owner arranges review another way. Claude never requests Codex, Copilot or any other external reviewer, and never posts `@codex review`. Follow the draft, CI and merge gates in `docs/review-workflow.md`. Claude owns its branch and PR work.
+- Review: Claude's PRs are reviewed by Claude through the `@claude` workflow (`.github/workflows/claude.yml`). The owner comments `@claude review` on the PR, or asks Claude to post it. The workflow needs the `CLAUDE_CODE_OAUTH_TOKEN` repository secret (issue #10) and skips with a warning without it; until then the owner arranges review another way. Claude never requests an external AI reviewer or agent (Codex, Copilot, or any other) and never posts `@codex review`. Follow the draft, CI and merge gates in `docs/review-workflow.md`. Claude owns its branch and PR work.
 - Run `/swift-check` before pushing. `/work-issue <N>` does the whole loop for one issue; the `feature-worker` agent runs it in its own worktree so issues can proceed in parallel.
 - Linux first, macOS only when needed. macOS minutes on GitHub-hosted runners count 10x, so that job waits for the Linux job and skips draft PRs. The repository variable `CI_RUNNER=self-hosted` moves both jobs to the owner's Mac (`docs/self-hosted-runner.md`); fork PRs always stay on hosted runners.
 - Check CI with `/ci-status`. Use the `macos-ci-investigator` agent for a failing macOS job.
@@ -97,8 +99,9 @@ Follow `/port-from-reference` whenever code from them is copied or closely follo
 
 - `docs/engineering-rules.md`: before any non-trivial investigation, proposal, or implementation, read it and apply the relevant sections (reuse order, exact-version research, environment checks, lifecycle and evidence-labeling rules).
 - `docs/review-workflow.md`: provider-neutral draft, CI, current-head review, finding-disposition, and merge gates.
+- `docs/agent-instruction-compatibility.md`: which agents read `CLAUDE.md`, `AGENTS.md`, `.claude/` and `.agents/`, what is verified, and the rules that keep them from interfering. Read it before changing either root file or the skill folders.
 - `docs/architecture-phase-1.md`, `docs/requirements/now-playing.md`: media identity and ownership decisions, and the Now Playing requirements. Read them before media work.
-- `AGENTS.md` and `.agents/` belong to Codex. `.agents/skills/` is an independent copy of `.claude/skills/`: don't mirror edits between them. Claude edits Codex-owned files only when the owner explicitly asks for it, as for PR #56, and says so in the commit.
+- `AGENTS.md` and `.agents/` are the cross-tool instruction files for other coding agents; Codex is the one configured here, but they are not Codex-only. `.agents/skills/` is an independent copy of `.claude/skills/`: don't mirror edits between them. Claude edits those files, and the other agents' config such as `.codex/`, only when the owner explicitly asks for it, as for PR #56, and says so in the commit.
 - `.claude/rules/swift-core.md`: rules for `Sources/NotchCore` and its tests (loads only when those files are touched).
 - `.claude/rules/ci.md`: rules for `.github/workflows` (loads only when those files are touched).
 - `.claude/rules/code-search.md`, `.claude/rules/reading-files.md`: how to search and read files.
