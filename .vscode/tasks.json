@@ -43,7 +43,8 @@
         "--recursive",
         "Sources",
         "Tests",
-        "App"
+        "App",
+        "AppTests"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
@@ -75,7 +76,8 @@
         "--recursive",
         "Sources",
         "Tests",
-        "App"
+        "App",
+        "AppTests"
       ],
       "options": {
         "cwd": "${workspaceFolder}"

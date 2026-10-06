@@ -30,7 +30,7 @@ select the matching toolchain with **Swift: Select Toolchain**. Shell tasks use
 
 **Swift: Verify** builds tests before running them, then lints. **Swift: Lint**
 populates Problems; save formats the current file but does not run the full lint.
-**Swift: Format all** rewrites Sources, Tests, and App intentionally.
+**Swift: Format all** rewrites Sources, Tests, App, and AppTests intentionally.
 
 ## Debugging and app integration
 

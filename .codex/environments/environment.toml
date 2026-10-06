@@ -22,4 +22,4 @@ command = "./script/build_and_run.sh --build-only"
 [[actions]]
 name = "Lint"
 icon = "test"
-command = "swift format lint --strict --recursive Sources Tests App"
+command = "swift format lint --strict --recursive Sources Tests App AppTests"
