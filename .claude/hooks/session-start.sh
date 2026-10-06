@@ -3,6 +3,15 @@
 # `swift` and `lldb` via Docker, since download.swift.org is blocked.
 set -euo pipefail
 
+# zsh aborts a whole Bash command when an unquoted glob matches nothing ("no matches
+# found: --include=*.swift"), so the grep or find in it never runs. Claude Code runs
+# CLAUDE_ENV_FILE before each Bash command; keep zsh's nonomatch (pass the glob through,
+# like bash) in effect. A resumed session doesn't source it, so code-search.md also
+# says to quote globs.
+if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+  echo 'setopt nonomatch 2>/dev/null || true' >>"$CLAUDE_ENV_FILE"
+fi
+
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   # On a Mac, tell the session whether OrbStack (the Linux CI side) is available.
   if [ "$(uname)" = "Darwin" ] && command -v orbctl >/dev/null 2>&1; then

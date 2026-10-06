@@ -35,7 +35,7 @@ Implement GitHub issue #$issue in this repository.
    - With no PR yet, open a draft that follows `.github/pull_request_template.md`. It says `Closes #$issue` and has a test plan listing only what you actually ran, plus anything that still needs a real Mac.
    - With an existing PR, update its description instead.
    - Mark the PR ready for review once every acceptance criterion you can check on a draft is verified and the Linux job, if CI runs, is green. Consult `.github/workflows/ci.yml` for watched paths; outside those filters no CI runs and there is nothing to wait for.
-   - On GitHub's runners, marking the PR ready is what starts the macOS job, so wait for it before counting a macOS criterion as verified. Don't request Codex or any other automated review; the owner arranges review.
+   - On GitHub's runners, marking the PR ready is what starts the macOS job, so wait for it before counting a macOS criterion as verified. Then ask the owner to comment `@claude review` on the PR (see `CLAUDE.md`). Don't request Codex, Copilot or any other automated review.
 9. **Address review findings on this PR.**
    - Check both inline review threads and PR conversation comments for actionable findings. Push fixes and reply with the commit and disposition of each finding.
    - After every change to the PR head, confirm that findings raised against an earlier commit still have a disposition on the current head.

@@ -33,6 +33,6 @@ Read-only git (`status`, `diff`, `log`, `branch`) needs no approval. Anything th
 - Open it as a draft, following `.github/pull_request_template.md`, with `Closes #<N>`.
 - The test plan lists only what you actually ran.
 - End the description with the PR attribution line the session gives you, if any.
-- Mark it ready once the checkable criteria are verified and the Linux job, if CI runs, is green. Don't request Codex or any other automated review. Follow `docs/review-workflow.md`: all actionable inline and conversation findings addressed, applicable CI passing, and separate branch protections satisfied. The owner arranges review and merges.
+- Mark it ready once the checkable criteria are verified and the Linux job, if CI runs, is green. Ask the owner to comment `@claude review` (see `CLAUDE.md`); don't request Codex, Copilot or any other automated review. Follow `docs/review-workflow.md`: all actionable inline and conversation findings addressed, applicable CI passing, and separate branch protections satisfied. The owner merges.
 
 Report what you did, and what you stopped on, in a few lines.
