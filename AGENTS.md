@@ -1,4 +1,4 @@
-# Repository workflow for Codex
+# Repository workflow
 
 - For requested changes to this repository, finish by committing and pushing the verified changes to `origin` without asking for a separate commit or push instruction.
 - For issue work, use a `claude/issue-<N>-<slug>` branch and the draft pull request workflow in `CLAUDE.md`. This takes precedence over the general branch rule below.
@@ -14,7 +14,7 @@
 
 ## Workspace commands
 
-- Read `docs/workspace.md` for editor, Codex, and worktree setup.
+- Read `docs/workspace.md` for editor and worktree setup.
 - Run `./script/setup.sh` to resolve the core package and generate the macOS project.
 - Run `./script/verify.sh` before pushing; app changes also require `./script/build_and_run.sh --build-only`.
 - Use `./script/build_and_run.sh --verify` to build, launch, and check the app process.

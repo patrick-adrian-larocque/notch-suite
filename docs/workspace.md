@@ -8,8 +8,6 @@
 | `.vscode/tasks.json` | Setup, core build/test/verify/lint/format, Debug/Release app builds, launch and log streams. |
 | `.vscode/launch.json` | Attach debugger to a running app, optionally building and launching first. |
 | `.vscode/extensions.json` | Recommended Swift, Todo Tree, Codex, and Markdown extensions. |
-| `.codex/config.toml` | Project root discovery without machine-specific model or permission overrides. |
-| `.codex/environments/environment.toml` | Worktree setup and Run/Verify/Build/Lint actions. |
 | `AGENTS.md` / `CLAUDE.md` | Repository workflow, implementation sources, architecture and verification requirements. |
 | `script/setup.sh` | Resolve the package; on macOS check Xcode/XcodeGen and generate the app project. |
 | `script/setup-cloud.sh` | Install native Swift 6.4 and LLDB on Ubuntu 24.04 for Codex Cloud, then resolve the package. |
@@ -48,30 +46,20 @@ Log/telemetry tasks keep running: stop their task terminals when finished.
 Release build compiles the app without relaunching it. Run only one build/run
 operation per checkout at a time.
 
-## Codex and worktrees
-
-The environment setup prepares fresh worktrees from their own root. Run and build
-actions require macOS. Shared project config is loaded only for trusted projects;
-trust, credentials, models, installed plugins/MCP servers, and permissions belong
-to the user's settings. No empty hooks, fake connectors, or account defaults are
-required to make this repository scaffold functional.
+## Worktrees
 
 Git manages worktrees; inspect them with `git worktree list`. Existing Claude
-checkouts live in `.claude/worktrees/`; Codex chooses its own worktree locations.
-Do not commit checkout contents. Keep machine-specific tool paths in VS Code user
-settings (for example `todo-tree.ripgrep.ripgrep`).
+checkouts live in `.claude/worktrees/`. Do not commit checkout contents. Keep
+machine-specific tool paths in VS Code user settings (for example
+`todo-tree.ripgrep.ripgrep`).
 
 ## Validation limits
 
 For Codex Cloud environment setup and Linux debugging, see [the Cloud guide](cloud.md).
-The local `.codex/environments/environment.toml` configures desktop worktrees
-and actions; Cloud installation is configured in the Cloud environment itself.
+Cloud installation is configured in the Cloud environment itself.
 
 JSON/TOML and scripts can be checked from the shell. VS Code task rendering,
-format-on-save, debugger attachment, and Codex action/worktree UI behavior need
-an editor session to verify. A successful shell build alone does not prove those
-UI integrations.
+format-on-save, and debugger attachment need an editor session to verify. A
+successful shell build alone does not prove those UI integrations.
 
-References: [VS Code debugging](https://code.visualstudio.com/docs/debugtest/debugging),
-[Codex local environments](https://learn.chatgpt.com/docs/environments/local-environment),
-and [Codex configuration](https://learn.chatgpt.com/docs/config-file/config-reference).
+References: [VS Code debugging](https://code.visualstudio.com/docs/debugtest/debugging).

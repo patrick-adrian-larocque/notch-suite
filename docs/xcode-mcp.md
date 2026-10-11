@@ -64,8 +64,8 @@ upgrade (see the last section); until a new tool is classified, treat it as muta
 - **Claude Code: repository-configured.** `.claude/settings.json` denies the 13 structural
   tools (`permissions.deny`). A deny rule wins over any allow and holds in every permission
   mode. This is the policy that was tested.
-- **Codex: not repository-enforced.** The committed `.codex/config.toml` does not define the
-  `xcode-tools` server (it lives in each user's local config), so nothing committed here
+- **Codex: not repository-enforced.** No Codex configuration is committed here, and the
+  `xcode-tools` server lives in each user's local config, so nothing committed here
   restricts Codex. `disabled_tools` below is a local, unverified suggestion: the key was not
   tested against Codex, and each user has to add it themselves.
 - **Other MCP clients** are not constrained by Claude's deny rules.
