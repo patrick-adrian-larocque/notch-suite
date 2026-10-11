@@ -79,8 +79,6 @@ Ubuntu 24.04 image. No extra download hosts are needed beyond the Ubuntu package
 repositories already allowed during setup. After adding these tools to an
 existing Cloud environment, rerun setup and republish so new tasks inherit them.
 
-The desktop `.codex/environments/environment.toml` is a local worktree/action
-configuration. Committing it does not create or publish a Cloud environment.
 Install/start configuration belongs to the Cloud environment. After changing
 that setup, republish and test a new task; existing tasks retain their own state.
 See the [official Cloud environment guide](https://learn.chatgpt.com/docs/environments/cloud-environments)

@@ -71,7 +71,7 @@ The app's Xcode project is generated from `project.yml` with
     xcodegen generate
     open NotchSuite.xcodeproj
 
-## VS Code and Codex workspace
+## VS Code workspace
 
 Open this repository root in VS Code. `.vscode/settings.json` enables Swift
 formatting on save using the Swift extension and the root `.swift-format`.
@@ -88,12 +88,11 @@ provide its Xcode build settings or Xcode-aware completion. Use the shared attac
 `./script/build_and_run.sh` generates the Xcode project, builds, and relaunches
 this checkout's app. It requires macOS, Xcode, and XcodeGen. Options include
 `--build-only`, `--verify`, `--debug`, `--logs`, and `--telemetry`.
-`.codex/environments/environment.toml` provides Run and Verify actions for the
-Codex app. Existing GitHub workflows remain in `.github/workflows/`; worktrees
-are separate checkouts managed by Git, not editor configuration files.
+Existing GitHub workflows remain in `.github/workflows/`; worktrees are separate
+checkouts managed by Git, not editor configuration files.
 
 See [the complete workspace guide](docs/workspace.md) for setup, debugging,
-Release builds, log tasks, Codex worktrees, and configuration boundaries.
+Release builds, log tasks, worktrees, and configuration boundaries.
 
 ## Codex Cloud
 
