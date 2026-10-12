@@ -11,7 +11,6 @@
   },
   "swift.disableSwiftPackageManagerIntegration": false,
   "swift.ignoreSwiftVersionFile": false,
-  "chat.agent.sandbox.allowNetwork": true,
   "chat.agent.sandbox.allowAutoApprove": true,
   "chat.agentHost.shellTool.initScript.enabled": true,
   "github.copilot.chat.codesearch.enabled": true,
@@ -34,5 +33,6 @@
   "files.exclude": {
     "**/.build": true,
     "**/build": true
-  }
+  },
+  "chat.agent.sandbox.network.allowNetwork": true
 }

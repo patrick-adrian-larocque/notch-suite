@@ -36,6 +36,7 @@ Package.resolved
 !.vscode/launch.json
 .idea/
 *.swp
+.tool_history/
 
 # Claude Code: personal settings, personal instructions, and worktree checkouts
 .claude/settings.local.json
